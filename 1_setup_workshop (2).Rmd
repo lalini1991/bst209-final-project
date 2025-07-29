@@ -1,0 +1,355 @@
+---
+title: 'Day 1 Workshop: Essential Tools Setup'
+subtitle: 'Git, GitHub, and R Markdown'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# This workshop doesn't require any special R packages for the setup portion
+```
+
+## Introduction
+
+This workshop will help you set up the essential tools you'll need throughout this course. We'll cover:
+
+1. **Git** - Version control for tracking changes in your code
+2. **GitHub** - Online platform for hosting and sharing code
+3. **R Markdown** - Document format for reproducible research
+4. **Ollama**: Ollama is software that allows you to install and run large language models on your local machine.
+
+By the end of this workshop, you'll have:
+- Git installed and configured on your computer
+- A GitHub account and repository for your project
+- Basic understanding of how to use these tools together
+
+## Prerequisites
+
+Before we begin, make sure you have:
+- A computer with internet access
+- R and RStudio installed (if not, we'll help you install them)
+- A GitHub account (we'll create one if needed)
+
+## Part 1: Installing Git
+
+### For Windows Users
+
+1. **Download Git for Windows:**
+   - Go to https://git-scm.com/download/win
+   - Download the latest version for Windows
+   - Run the installer
+
+2. **Installation Options (recommended settings):**
+   - Checkout as-is, commit Unix-style line endings
+   - Default (fast-forward or merge)
+
+3. **Verify Installation:**
+   - Open Command Prompt or Git Bash
+   - Type: `git --version`
+   - You should see something like: `git version 2.40.0.windows.1`
+
+### For Mac Users
+
+1. **Using Homebrew (recommended):**
+   ```bash
+   # Install Homebrew first (if you don't have it)
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   
+   # Install Git
+   brew install git
+   ```
+
+2. **Or download from Git website:**
+   - Go to https://git-scm.com/download/mac
+   - Download and install
+
+3. **Verify Installation:**
+   - Open Terminal
+   - Type: `git --version`
+   - You should see something like: `git version 2.40.0`
+
+### Configure Git
+
+After installation, configure Git with your information:
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+## Part 2: Creating a GitHub Account
+
+1. **Go to GitHub:**
+   - Visit https://github.com
+   - Click "Sign up"
+
+2. **Create Account:**
+   - Enter your email address
+   - Create a password
+   - Choose a username (this will be your GitHub handle)
+   - Complete the verification process
+
+3. **Add an SSH key to your GitHub account** (optional)
+   - Adding an SSH key allows you to avoid endlessly re-typing your password when working with git.
+   - Follow the instructions here: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
+
+
+## Part 3: Setting Up Your Project Repository
+
+### Create a New Repository
+
+1. **On GitHub:**
+   - Click the "+" icon in the top right
+   - Select "New repository"
+
+2. **Repository Settings:**
+   - **Repository name:** `bst209-final-project` (or your preferred name)
+   - **Description:** "Machine Learning in Healthcare Final Project"
+   - **Visibility:** Public
+   - **Initialize with:** Check "Add a README file"
+   - Click "Create repository"
+
+### Clone Your Repository
+
+1. **Get the repository URL:**
+   - On your GitHub repository page, click the green "Code" button
+   - Copy the "SSH" URL if possible, if you set up your SSH key. If not, copy the HTTPS URL (looks like: `https://github.com/yourusername/bst209-final-project.git`)
+
+2. **Clone to your computer:**
+   - Open your shell (Terminal/GitBash)
+
+   ```bash
+   # Navigate to where you want your project
+   cd ~/Documents  # or wherever you prefer
+   
+   # Clone the repository
+   git clone <YOUR_REPO_LINK_COPIED_FROM_GITHUB>
+   
+   # Navigate into your project folder
+   cd bst209-final-project
+   ```
+
+## Part 4: Basic Git Commands
+
+Let's practice with some basic Git commands:
+
+### Check Status
+```bash
+git status
+```
+This shows you the current state of your repository.
+
+### Make Changes and Commit
+```bash
+# Create a new file
+echo "# My BST209 Project" > README.md
+
+# Check status
+git status
+
+# Add the file to staging
+git add README.md
+
+# Commit the changes
+git commit -m "Initial commit with README"
+
+# Push to GitHub
+git push origin main
+```
+
+### Basic Workflow
+Here's the typical workflow you'll use:
+
+1. **Make changes** to your files
+2. **Check status:** `git status`
+3. **Add files:** `git add filename`
+4. **Commit changes:** `git commit -m "Description of changes"`
+5. **Push to GitHub:** `git push origin main`
+
+## Part 5: R Markdown Basics
+
+R Markdown combines R code, output, and text in a single document. It's perfect for reproducible research.
+
+### Create Your First R Markdown Document
+
+1. **In RStudio:**
+   - File → New File → R Markdown
+   - Give it a title: "BST209 Project"
+   - Choose HTML output
+   - Click "OK"
+
+2. **Basic R Markdown Structure:**
+   ```yaml
+   ---
+   title: "BST209 Project"
+   author: "Your Name"
+   date: "`r Sys.Date()`"
+   output: html_document
+   ---
+   ```
+
+3. **Add Content:**
+
+   # Introduction
+   
+   This is my final project for BST209: Machine Learning in Healthcare.
+   
+   ## Data Analysis
+   
+   ```{r, eval=FALSE}
+   # Your R code goes here
+   library(tidyverse)
+   
+   # Load data
+   data <- read.csv("your_data.csv")
+   
+   # Basic summary
+   summary(data)
+   ```
+
+### Key R Markdown Features
+
+- **Headers:** Use `#` for different levels
+- **Code chunks:** Use backticks `` for R code
+- **Lists:** Use `-` or `*` for bullet points
+- **Bold:** Use `**text**`
+- **Italic:** Use `*text*`
+
+### Knitting Your Document
+
+1. **Click the "Knit" button** in RStudio
+2. **Choose output format** (HTML, PDF, Word)
+3. **Your document will be rendered** with code output and formatting
+
+## Part 6: Integrating Git with RStudio
+
+RStudio has built-in Git support:
+
+1. **Enable Git in RStudio:**
+   - Tools → Global Options → Git/SVN
+   - Set path to Git executable
+   - Restart RStudio
+
+2. **Using Git in RStudio:**
+   - **Git tab:** Shows file status
+   - **Commit button:** Stage and commit changes
+   - **Push/Pull buttons:** Sync with GitHub
+
+## Exercise: Create Your First Project File
+
+Let's create your first project file and practice the workflow:
+
+1. **Create an R Markdown file:**
+   ```r
+   # In RStudio, create a new R Markdown file
+   # Save it as "project_overview.Rmd"
+   ```
+
+2. **Add some content:**
+
+   ```markdown
+   ---
+   title: "BST209 Final Project Overview"
+   author: "Your Name"
+   date: "`r Sys.Date()`"
+   output: html_document
+   ---
+   
+   # Project Overview
+   
+   ## Research Question
+   
+   [Describe your research question here]
+   
+   ## Data Source
+   
+   [Describe your data source here]
+   
+   ## Methods
+   
+   [Describe your planned methods here]
+   
+   ## Expected Outcomes
+   
+   [Describe what you expect to find]
+   ```
+
+3. **Practice the Git workflow:**
+   ```bash
+   # Add your new file
+   git add project_overview.Rmd
+   
+   # Commit the changes
+   git commit -m "Add project overview document"
+   
+   # Push to GitHub
+   git push origin main
+   ```
+
+## Part 7: Install Ollama
+
+Ollama is software that allows you to install and run large language models on your local machine.
+
+For the workshop on large language models, you will need to install Ollama.
+
+To install Ollama, go to: https://ollama.com/
+
+## Troubleshooting Common Issues
+
+### Git Issues
+
+**"Git is not recognized as a command":**
+- Make sure Git is installed and in your PATH
+- Restart your terminal/command prompt
+
+### R Markdown Issues
+
+**"Package not found":**
+```{r, eval=FALSE}
+# Install missing packages
+install.packages("package_name")
+```
+
+## Best Practices
+
+### Git Best Practices
+- **Commit frequently** with meaningful messages
+- **Use descriptive commit messages**
+- **Pull before pushing** to avoid conflicts
+- **Don't commit large files** (use .gitignore)
+
+### R Markdown Best Practices
+- **Keep code chunks focused** on one task
+- **Use meaningful chunk names**
+- **Document your code** with comments
+- **Test your document** regularly
+
+### Project Organization
+```
+bst209-final-project/
+├── README.md
+├── data/
+├── code/
+├── results/
+├── docs/
+└── .gitignore
+```
+
+## Next Steps
+
+1. **Complete the setup** if you haven't already
+2. **Practice the basic Git workflow** with small changes
+3. **Create your project structure** following the organization above
+4. **Start working on your project overview** document
+
+## Resources
+
+- **Git Documentation:** https://git-scm.com/doc
+- **GitHub Guides:** https://guides.github.com/
+- **R Markdown:** https://rmarkdown.rstudio.com/
+- **RStudio Cheat Sheets:** https://www.rstudio.com/resources/cheatsheets/
+
+---
+
+**Remember:** The goal is to get comfortable with these tools, so use the project as an opportunity to practice.
