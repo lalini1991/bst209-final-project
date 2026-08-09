@@ -1,0 +1,560 @@
+<title>Cambridge Toddler Care Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ---------- Tokens: light (bare :root = system-default light) ---------- */
+  :root {
+    --ground:      #faf7f2;
+    --surface:     #ffffff;
+    --surface-2:   #f4efe7;
+    --ink:         #2a251f;
+    --muted:       #6f675c;
+    --faint:       #9a9187;
+    --line:        #e6ded2;
+    --line-strong: #d7ccbc;
+    --accent:      #2e7d6b;
+    --accent-ink:  #1f5a4d;
+    --accent-wash: #e5f0ec;
+
+    /* status hues */
+    --s-new:   #8a8177;  --s-new-wash:   #efeae2;
+    --s-call:  #3a72b0;  --s-call-wash:  #e4eef8;
+    --s-tour:  #7a5bd0;  --s-tour-wash:  #ece6fa;
+    --s-wait:  #b5791f;  --s-wait-wash:  #f8eed8;
+    --s-offer: #2f8b4e;  --s-offer-wash: #e2f3e7;
+    --s-out:   #b8543f;  --s-out-wash:   #f7e5df;
+
+    --shadow: 0 1px 2px rgba(40,32,20,.05), 0 6px 20px rgba(40,32,20,.06);
+    --radius: 14px;
+    --font-serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --font-sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  /* Dark via OS, unless an explicit light choice is stamped */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #1a1713;
+      --surface:     #232019;
+      --surface-2:   #2c2820;
+      --ink:         #efe8dc;
+      --muted:       #b0a696;
+      --faint:       #857c6e;
+      --line:        #362f26;
+      --line-strong: #443c30;
+      --accent:      #5bb8a3;
+      --accent-ink:  #8fd4c3;
+      --accent-wash: #1e2f2a;
+
+      --s-new:   #a79d90;  --s-new-wash:   #2b2820;
+      --s-call:  #6fa6df;  --s-call-wash:  #1d2a37;
+      --s-tour:  #a98ff0;  --s-tour-wash:  #262038;
+      --s-wait:  #d7a24a;  --s-wait-wash:  #322815;
+      --s-offer: #62c07f;  --s-offer-wash: #1a2f20;
+      --s-out:   #e07a63;  --s-out-wash:   #33211b;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  /* Explicit dark toggle wins in the other direction too */
+  :root[data-theme="dark"] {
+    --ground:      #1a1713;
+    --surface:     #232019;
+    --surface-2:   #2c2820;
+    --ink:         #efe8dc;
+    --muted:       #b0a696;
+    --faint:       #857c6e;
+    --line:        #362f26;
+    --line-strong: #443c30;
+    --accent:      #5bb8a3;
+    --accent-ink:  #8fd4c3;
+    --accent-wash: #1e2f2a;
+    --s-new:   #a79d90;  --s-new-wash:   #2b2820;
+    --s-call:  #6fa6df;  --s-call-wash:  #1d2a37;
+    --s-tour:  #a98ff0;  --s-tour-wash:  #262038;
+    --s-wait:  #d7a24a;  --s-wait-wash:  #322815;
+    --s-offer: #62c07f;  --s-offer-wash: #1a2f20;
+    --s-out:   #e07a63;  --s-out-wash:   #33211b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 72px; }
+
+  /* ---------- Masthead ---------- */
+  header.mast { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-end; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+  .mast h1 { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.7rem, 3.6vw, 2.5rem); line-height: 1.05; margin: 0 0 6px; letter-spacing: -.01em; text-wrap: balance; }
+  .mast .sub { color: var(--muted); max-width: 60ch; margin: 0; }
+  .mast .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .68rem; font-weight: 700; color: var(--accent-ink); margin: 0 0 10px; }
+  .toolbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  button, select, input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  .btn {
+    appearance: none; border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--ink); padding: 8px 13px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: .82rem;
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color .15s, background .15s, transform .05s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---------- Stat tiles ---------- */
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 22px 0 6px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .tile::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--tile-c, var(--accent)); }
+  .tile .n { font-size: 1.9rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .tile .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-top: 7px; font-weight: 600; }
+  .tile.clickable { cursor: pointer; }
+  .tile.clickable:hover { border-color: var(--tile-c, var(--accent)); }
+  .tile.active { box-shadow: 0 0 0 2px var(--tile-c, var(--accent)) inset, var(--shadow); }
+
+  /* ---------- Info banner ---------- */
+  .note { background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 12px; padding: 12px 15px; margin: 22px 0 4px; font-size: .86rem; color: var(--ink); display: flex; gap: 10px; align-items: flex-start; }
+  .note b { color: var(--accent-ink); }
+  .note svg { flex: none; margin-top: 2px; }
+
+  /* ---------- Controls bar ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 16px; }
+  .controls .field { display: inline-flex; align-items: center; gap: 7px; }
+  .controls label { font-size: .78rem; color: var(--muted); font-weight: 600; }
+  select.ctl, input.search {
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; padding: 8px 11px; font-size: .84rem;
+  }
+  input.search { min-width: 200px; }
+  .controls .count { margin-left: auto; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Cards grid ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+  }
+  .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--st, var(--s-new)); }
+  .card .body { padding: 16px 16px 14px 19px; display: flex; flex-direction: column; gap: 11px; height: 100%; }
+  .card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card h3 { font-family: var(--font-serif); font-size: 1.14rem; font-weight: 600; margin: 0; line-height: 1.18; letter-spacing: -.01em; }
+  .badge-type { font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); padding: 3px 7px; border-radius: 6px; white-space: nowrap; margin-top: 2px; }
+
+  .meta { display: flex; flex-direction: column; gap: 5px; font-size: .84rem; }
+  .meta .row { display: flex; gap: 8px; align-items: baseline; color: var(--muted); }
+  .meta .row .k { flex: none; width: 15px; color: var(--faint); }
+  .meta a { color: var(--accent-ink); text-decoration: none; font-weight: 600; word-break: break-word; }
+  .meta a:hover { text-decoration: underline; }
+  .meta .val { color: var(--ink); }
+
+  .status-pill { align-self: flex-start; font-size: .72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; letter-spacing: .02em; }
+
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 10px; margin-top: 2px; }
+  .fields .fld { display: flex; flex-direction: column; gap: 3px; }
+  .fields .fld.full { grid-column: 1 / -1; }
+  .fields label { font-size: .66rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 700; }
+  .fields input, .fields textarea, .fields select {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: .84rem; width: 100%;
+  }
+  .fields input::placeholder, .fields textarea::placeholder { color: var(--faint); }
+  .fields textarea { resize: vertical; min-height: 40px; line-height: 1.4; }
+  .fields .price-in { font-variant-numeric: tabular-nums; }
+  .card .foot { margin-top: auto; padding-top: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .del { background: none; border: none; color: var(--faint); cursor: pointer; font-size: .74rem; font-weight: 600; padding: 4px; }
+  .del:hover { color: var(--s-out); }
+  .saved-tick { font-size: .72rem; color: var(--s-offer); font-weight: 700; opacity: 0; transition: opacity .2s; }
+  .saved-tick.show { opacity: 1; }
+
+  footer.foot-note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; line-height: 1.6; }
+  footer.foot-note a { color: var(--accent-ink); }
+  .empty { text-align: center; color: var(--muted); padding: 50px 20px; font-style: italic; }
+
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) {
+    .wrap { padding: 20px 14px 60px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+    .controls .count { margin-left: 0; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media print {
+    .controls, .toolbtns, .note, .del, .tile.clickable { display: none !important; }
+    body { background: #fff; }
+    .card, .tile { box-shadow: none; break-inside: avoid; }
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow">Childcare search · Cambridge, MA · Age 2</p>
+      <h1>Toddler Care Tracker</h1>
+      <p class="sub">Daycare centers and family (home-based) care in Cambridge that take 2-year-olds. Call to confirm price and openings, then log status, notes, and follow-ups right here — everything saves in your browser.</p>
+    </div>
+    <div class="toolbtns">
+      <button class="btn" id="addBtn">+ Add a place</button>
+      <button class="btn" id="exportBtn">Export</button>
+      <button class="btn" id="printBtn">Print / PDF</button>
+      <button class="btn" id="themeBtn" aria-label="Toggle dark mode">Theme</button>
+      <button class="btn" id="resetBtn">Reset</button>
+    </div>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Summary"></section>
+
+  <div class="note">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <div>Centers rarely post toddler tuition online, so price fields start blank — fill them in as you call. For rough budgeting, full-time center care in Cambridge commonly runs <b>~$2,200–$3,200/mo</b>; licensed family childcare is often lower. Financial help: <b>Child Care Choices of Boston (617) 542-5437</b>. Data below was gathered from public listings on <span style="white-space:nowrap">2026-08-09</span> — <b>verify phone &amp; availability directly</b>.</div>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <input class="search" id="search" type="search" placeholder="Search name, address, notes…" aria-label="Search">
+    </div>
+    <div class="field">
+      <label for="typeFilter">Type</label>
+      <select class="ctl" id="typeFilter">
+        <option value="">All</option>
+        <option value="Center">Centers</option>
+        <option value="Family">Family / home care</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="sort">Sort</label>
+      <select class="ctl" id="sort">
+        <option value="status">By status</option>
+        <option value="name">By name</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+      </select>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <section class="grid" id="grid"></section>
+  <p class="empty" id="empty" hidden>No places match your filters.</p>
+
+  <footer class="foot-note">
+    <p><b>Directories to find more &amp; verify:</b>
+      MA EEC licensed-programs directory ·
+      <a href="https://earlychildhoodcambridge.org/for-families/" target="_blank" rel="noopener">Cambridge Office of Early Childhood</a> ·
+      <a href="https://www.finditcambridge.org/" target="_blank" rel="noopener">Find It Cambridge</a> ·
+      <a href="https://winnie.com/cambridge/daycares" target="_blank" rel="noopener">Winnie</a>.
+    </p>
+    <p>This is a personal planning tool. Details (phone, price, openings) change often and should be confirmed with each provider. Your edits are stored only in this browser (localStorage) — use <b>Export</b> to keep a copy.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var STORE_KEY = "cambridge-toddler-care-v1";
+
+  var STATUS = {
+    new:   { label: "To contact",  c: "--s-new",   w: "--s-new-wash",   order: 0 },
+    call:  { label: "Contacted",   c: "--s-call",  w: "--s-call-wash",  order: 1 },
+    tour:  { label: "Tour booked", c: "--s-tour",  w: "--s-tour-wash",  order: 2 },
+    wait:  { label: "Waitlisted",  c: "--s-wait",  w: "--s-wait-wash",  order: 3 },
+    offer: { label: "Offer / spot",c: "--s-offer", w: "--s-offer-wash", order: 4 },
+    out:   { label: "Ruled out",   c: "--s-out",   w: "--s-out-wash",   order: 5 }
+  };
+  var STATUS_ORDER = ["new","call","tour","wait","offer","out"];
+
+  // ---- Seed data: real Cambridge, MA options (public listings, Aug 2026). Verify before relying. ----
+  var SEED = [
+    { id:"kindercare", name:"Cambridge KinderCare", type:"Center",
+      address:"100 Cambridgepark Dr, Cambridge, MA 02140", phone:"(617) 876-0102",
+      web:"https://www.kindercare.com/our-centers/cambridge/ma/301902",
+      age:"Toddler 1–2 yr + Discovery 2–3 yr", seedNotes:"National chain. Open 6:30a–6:00p. Ask about the 2s (Discovery Preschool) room." },
+    { id:"bh-kendall", name:"Bright Horizons at Kendall Square", type:"Center",
+      address:"286 Cardinal Medeiros Ave, Cambridge, MA 02141", phone:"(617) 336-4490",
+      web:"https://child-care-preschool.brighthorizons.com/ma/cambridge/kendallsquare",
+      age:"2 months – 5 yr", seedNotes:"Some MIT/Tufts/local employers get priority access — ask if your employer partners with BH." },
+    { id:"bh-massave", name:"Bright Horizons at Mass Ave", type:"Center",
+      address:"2465 Mass Ave, Cambridge, MA 02140", phone:"(617) 336-4491",
+      web:"https://www.brighthorizons.com/daycare-centers/ma/cambridge/2465-mass-ave-02140",
+      age:"2 months – 5 yr", seedNotes:"North Cambridge / Porter Square area." },
+    { id:"cportcc", name:"Cambridgeport Children's Center", type:"Center",
+      address:"65R Chestnut St, Cambridge, MA 02139", phone:"(617) 868-4275",
+      web:"https://www.finditcambridge.org/",
+      age:"Toddler – preschool", seedNotes:"Reggio-inspired, values diversity. Hours ~8:15a–5:30p." },
+    { id:"oxfordcoop", name:"Oxford Street Day Care Cooperative", type:"Center",
+      address:"25 Francis Ave (Shannon Hall), Cambridge, MA 02138", phone:"(617) 547-3175",
+      web:"https://oxfordstcoop.wordpress.com/",
+      age:"Toddler – preschool", seedNotes:"Parent cooperative on Harvard campus — may involve parent participation. Popular, expect a waitlist." },
+    { id:"everbrook", name:"Everbrook Academy of Cambridge (TSC)", type:"Center",
+      address:"220 Binney St, Cambridge, MA 02142", phone:"(617) 494-5382",
+      web:"https://www.everbrookacademy.com/our-schools/cambridge-ma-4891/",
+      age:"Infant, Toddler, Twos, Preschool", seedNotes:"Kendall Square. Distinct 'Twos' classroom for 2-year-olds." },
+    { id:"pota", name:"Cambridge Preschool of the Arts (Inman)", type:"Center",
+      address:"243 Hampshire St, Cambridge, MA 02139", phone:"(617) 547-9189",
+      web:"https://www.cambridgepreschool.org/",
+      age:"Toddler 15 mo – 2.8 yr", seedNotes:"Arts-focused. Multiple locations — confirm which one has a 2s opening." },
+    { id:"nurtury", name:"Nurtury at Harvard Street", type:"Center",
+      address:"Temp: 359 Broadway (enter 8 Fayette St), Cambridge, MA 02139", phone:"(617) 492-3935",
+      web:"https://www.nurturyboston.org/location/harvard-street/",
+      age:"Infant – preschool", seedNotes:"Home site (243 Harvard St) under 2-yr renovation; operating from 359 Broadway since Jan 2026. Offers financial assistance / subsidies." },
+    { id:"lils", name:"Lil's Tiny Tots Family Daycare", type:"Family",
+      address:"2 Frances Pl, Cambridge, MA 02140", phone:"(617) 576-0871",
+      web:"", age:"Mixed-age home care", seedNotes:"Licensed family childcare (home-based), small group." },
+    { id:"richdale", name:"Richdale's Family Child Care", type:"Family",
+      address:"113 Richdale Ave, Apt 24, Cambridge, MA 02140", phone:"(617) 386-3770",
+      web:"", age:"Infant – toddler", seedNotes:"Listing noted openings for toddlers this fall — worth calling early." },
+    { id:"clarke", name:"Laura Clarke Family Child Care", type:"Family",
+      address:"Franklin St, Cambridge, MA 02139", phone:"(617) 735-5116",
+      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare." },
+    { id:"torres", name:"Maria C. Torres Family Child Care", type:"Family",
+      address:"Evereteze Way, Cambridge, MA 02141", phone:"(617) 491-3567",
+      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare, East Cambridge." }
+  ];
+
+  // Fields the user can edit (persisted per id, merged onto SEED)
+  var EDITABLE = ["status","price","avail","last","notes"];
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  var state = load(); // { userAdded: [...], edits: { id: {status,price,...} } }
+  if (!state.edits) state.edits = {};
+  if (!state.userAdded) state.userAdded = [];
+
+  function allPlaces() {
+    return SEED.concat(state.userAdded);
+  }
+  function getEdit(id) {
+    if (!state.edits[id]) state.edits[id] = { status: "new", price: "", avail: "", last: "", notes: "" };
+    return state.edits[id];
+  }
+
+  var grid = document.getElementById("grid");
+  var statsEl = document.getElementById("stats");
+  var searchEl = document.getElementById("search");
+  var typeEl = document.getElementById("typeFilter");
+  var sortEl = document.getElementById("sort");
+  var countEl = document.getElementById("count");
+  var emptyEl = document.getElementById("empty");
+  var activeStatusFilter = "";
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]; }); }
+  function telHref(p) { return "tel:" + String(p).replace(/[^\d+]/g, ""); }
+
+  function renderStats() {
+    var places = allPlaces();
+    var counts = { total: places.length, new:0, call:0, tour:0, wait:0, offer:0, out:0 };
+    places.forEach(function (p) { counts[getEdit(p.id).status]++; });
+    var tiles = [
+      { key:"", n: counts.total, l:"Total options", c:"--accent" },
+      { key:"new", n: counts.new, l:"To contact", c:"--s-new" },
+      { key:"call", n: counts.call + counts.tour, l:"In progress", c:"--s-call" },
+      { key:"wait", n: counts.wait, l:"Waitlisted", c:"--s-wait" },
+      { key:"offer", n: counts.offer, l:"Offers / spots", c:"--s-offer" },
+      { key:"out", n: counts.out, l:"Ruled out", c:"--s-out" }
+    ];
+    statsEl.innerHTML = tiles.map(function (t) {
+      var active = (t.key === activeStatusFilter && t.key !== "") ? " active" : "";
+      var clickable = t.key ? " clickable" : "";
+      return '<div class="tile' + clickable + active + '" style="--tile-c:var(' + t.c + ')" data-status="' + t.key + '" '
+        + (t.key ? 'role="button" tabindex="0" aria-pressed="' + (active ? "true":"false") + '"' : "")
+        + '><div class="n">' + t.n + '</div><div class="l">' + t.l + '</div></div>';
+    }).join("");
+    // "In progress" tile toggles both call+tour; treat as 'call' filter shortcut
+  }
+
+  function currentList() {
+    var q = searchEl.value.trim().toLowerCase();
+    var tf = typeEl.value;
+    var list = allPlaces().filter(function (p) {
+      var e = getEdit(p.id);
+      if (tf && p.type !== tf) return false;
+      if (activeStatusFilter) {
+        if (activeStatusFilter === "call") { if (e.status !== "call" && e.status !== "tour") return false; }
+        else if (e.status !== activeStatusFilter) return false;
+      }
+      if (q) {
+        var hay = (p.name + " " + p.address + " " + (e.notes||"") + " " + (p.seedNotes||"")).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+    var s = sortEl.value;
+    list.sort(function (a, b) {
+      var ea = getEdit(a.id), eb = getEdit(b.id);
+      if (s === "name") return a.name.localeCompare(b.name);
+      if (s === "price-asc" || s === "price-desc") {
+        var pa = parseFloat(String(ea.price).replace(/[^\d.]/g, "")) || Infinity;
+        var pb = parseFloat(String(eb.price).replace(/[^\d.]/g, "")) || Infinity;
+        return s === "price-asc" ? pa - pb : (pb === Infinity ? -1 : pa === Infinity ? 1 : pb - pa);
+      }
+      // status
+      var d = STATUS[ea.status].order - STATUS[eb.status].order;
+      return d !== 0 ? d : a.name.localeCompare(b.name);
+    });
+    return list;
+  }
+
+  function statusSelect(id, cur) {
+    return '<select class="js-status" data-id="' + id + '" aria-label="Status">' +
+      STATUS_ORDER.map(function (k) {
+        return '<option value="' + k + '"' + (k === cur ? " selected" : "") + '>' + STATUS[k].label + '</option>';
+      }).join("") + '</select>';
+  }
+
+  function cardHTML(p) {
+    var e = getEdit(p.id);
+    var st = STATUS[e.status];
+    var web = p.web ? '<div class="row"><span class="k">↗</span><a href="' + esc(p.web) + '" target="_blank" rel="noopener">Website</a></div>' : "";
+    var seed = p.seedNotes ? '<div class="row"><span class="k">•</span><span class="val" style="color:var(--muted)">' + esc(p.seedNotes) + '</span></div>' : "";
+    return '<article class="card" style="--st:var(' + st.c + ')" data-id="' + p.id + '">' +
+      '<div class="body">' +
+        '<div class="top">' +
+          '<h3>' + esc(p.name) + '</h3>' +
+          '<span class="badge-type">' + (p.type === "Family" ? "Home care" : "Center") + '</span>' +
+        '</div>' +
+        '<span class="status-pill" style="color:var(' + st.c + ');background:var(' + st.w + ')">' + st.label + '</span>' +
+        '<div class="meta">' +
+          '<div class="row"><span class="k">☎</span><a href="' + telHref(p.phone) + '">' + esc(p.phone) + '</a></div>' +
+          '<div class="row"><span class="k">⌂</span><span class="val">' + esc(p.address) + '</span></div>' +
+          '<div class="row"><span class="k">◷</span><span class="val" style="color:var(--muted)">' + esc(p.age) + '</span></div>' +
+          web + seed +
+        '</div>' +
+        '<div class="fields">' +
+          '<div class="fld"><label>Status</label>' + statusSelect(p.id, e.status) + '</div>' +
+          '<div class="fld"><label>Est. price / mo</label><input class="price-in js-edit" data-id="' + p.id + '" data-f="price" value="' + esc(e.price) + '" placeholder="$ —" inputmode="numeric"></div>' +
+          '<div class="fld"><label>Availability</label><input class="js-edit" data-id="' + p.id + '" data-f="avail" value="' + esc(e.avail) + '" placeholder="e.g. Sept spot / waitlist"></div>' +
+          '<div class="fld"><label>Last contacted</label><input class="js-edit" data-id="' + p.id + '" data-f="last" type="date" value="' + esc(e.last) + '"></div>' +
+          '<div class="fld full"><label>Notes</label><textarea class="js-edit" data-id="' + p.id + '" data-f="notes" placeholder="Who you spoke to, cost, vibe, next step…">' + esc(e.notes) + '</textarea></div>' +
+        '</div>' +
+        '<div class="foot">' +
+          '<span class="saved-tick" data-id="' + p.id + '">✓ Saved</span>' +
+          (p.userAdded ? '<button class="del" data-id="' + p.id + '">Remove</button>' : '<span></span>') +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function render() {
+    renderStats();
+    var list = currentList();
+    grid.innerHTML = list.map(cardHTML).join("");
+    var total = allPlaces().length;
+    countEl.textContent = list.length === total ? (total + " places") : (list.length + " of " + total + " shown");
+    emptyEl.hidden = list.length !== 0;
+  }
+
+  function flash(id) {
+    var t = grid.querySelector('.saved-tick[data-id="' + CSS.escape(id) + '"]');
+    if (!t) return;
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 1100);
+  }
+
+  // ---- Events (delegated) ----
+  grid.addEventListener("input", function (ev) {
+    var el = ev.target;
+    if (el.classList.contains("js-edit")) {
+      var id = el.getAttribute("data-id"), f = el.getAttribute("data-f");
+      getEdit(id)[f] = el.value; save(state); flash(id);
+    }
+  });
+  grid.addEventListener("change", function (ev) {
+    var el = ev.target;
+    if (el.classList.contains("js-status")) {
+      var id = el.getAttribute("data-id");
+      getEdit(id).status = el.value; save(state);
+      // update stripe + pill live without full rerender losing focus elsewhere
+      render();
+    }
+  });
+  grid.addEventListener("click", function (ev) {
+    var d = ev.target.closest(".del");
+    if (d) {
+      var id = d.getAttribute("data-id");
+      if (confirm("Remove this place from your tracker?")) {
+        state.userAdded = state.userAdded.filter(function (p) { return p.id !== id; });
+        delete state.edits[id]; save(state); render();
+      }
+    }
+  });
+
+  statsEl.addEventListener("click", function (ev) {
+    var tile = ev.target.closest(".tile.clickable");
+    if (!tile) return;
+    toggleStatusFilter(tile.getAttribute("data-status"));
+  });
+  statsEl.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter" && ev.key !== " ") return;
+    var tile = ev.target.closest(".tile.clickable");
+    if (!tile) return;
+    ev.preventDefault();
+    toggleStatusFilter(tile.getAttribute("data-status"));
+  });
+  function toggleStatusFilter(s) {
+    activeStatusFilter = (activeStatusFilter === s) ? "" : s;
+    render();
+  }
+
+  searchEl.addEventListener("input", render);
+  typeEl.addEventListener("change", render);
+  sortEl.addEventListener("change", render);
+
+  document.getElementById("addBtn").addEventListener("click", function () {
+    var name = prompt("Name of the daycare / caregiver?");
+    if (!name) return;
+    var phone = prompt("Phone number? (optional)") || "";
+    var id = "u_" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 24) + "_" + state.userAdded.length;
+    state.userAdded.push({ id:id, name:name, type:"Center", address:"", phone:phone, web:"", age:"", seedNotes:"", userAdded:true });
+    getEdit(id); save(state); activeStatusFilter = ""; searchEl.value = ""; render();
+    var card = grid.querySelector('.card[data-id="' + CSS.escape(id) + '"]');
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    var rows = allPlaces().map(function (p) {
+      var e = getEdit(p.id);
+      return { name:p.name, type:p.type, phone:p.phone, address:p.address, age:p.age,
+        status:STATUS[e.status].label, price:e.price, availability:e.avail, lastContacted:e.last, notes:e.notes, website:p.web };
+    });
+    var blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cambridge-toddler-care.json";
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (confirm("Reset all statuses, prices, and notes to the starting list? This clears your saved edits.")) {
+      localStorage.removeItem(STORE_KEY);
+      state = { edits: {}, userAdded: [] };
+      activeStatusFilter = ""; searchEl.value = ""; typeEl.value = ""; sortEl.value = "status";
+      render();
+    }
+  });
+
+  // Theme toggle (cycles explicit light/dark; overrides system)
+  var themeBtn = document.getElementById("themeBtn");
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem(STORE_KEY + "-theme"); } catch (e) {}
+  if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  themeBtn.addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var isDark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(STORE_KEY + "-theme", next); } catch (e) {}
+  });
+
+  render();
+})();
+</script>
