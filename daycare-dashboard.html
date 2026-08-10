@@ -280,7 +280,7 @@
 <script>
 (function () {
   "use strict";
-  var STORE_KEY = "cambridge-toddler-care-v1";
+  var STORE_KEY = "cambridge-toddler-care-v2";
   var MSG_KEY = STORE_KEY + "-msg";
   var SUBJECT = "Full-time care for our son Arthur (2) from September";
   var DEFAULT_MSG = "Hello! We're Lara & Marcus, parents to Arthur (born 3 July 2024 — he's 2). I'm doing my doctorate at Harvard and Marcus runs his own business, and we're looking for full-day care, Monday to Friday, starting in September. Do you have a space for his age group? If so, could you let us know your cost, and whether we could come by to visit? Thank you so much! — Lara & Marcus, [your number]";
@@ -336,7 +336,9 @@
       web:"", age:"Mixed-age home care", seedNotes:"Licensed family childcare (home-based), small group." },
     { id:"richdale", name:"Richdale's Family Child Care", type:"Family",
       address:"113 Richdale Ave, Apt 24, Cambridge, MA 02140", phone:"(617) 386-3770",
-      web:"", age:"Infant – toddler", seedNotes:"Listing noted openings for toddlers this fall — worth calling early." },
+      web:"", age:"Infant – toddler", seedNotes:"Listing noted openings for toddlers this fall — worth calling early.",
+      status:"tour", avail:"Meeting offered", last:"2026-08-10",
+      notes:"Replied 8/10: Kaniz (educator). Wants our email to send details. Offered a meeting Wed 10am or Fri 10am. → Next: send email + confirm a slot." },
     { id:"clarke", name:"Laura Clarke Family Child Care", type:"Family",
       address:"Franklin St, Cambridge, MA 02139", phone:"(617) 735-5116",
       web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare." },
@@ -354,7 +356,9 @@
       web:"http://sandjhomedaycare.com/", age:"Home care", seedNotes:"Established licensed home daycare (since 1996), North Cambridge. Rated 2.0★ (1 review)." },
     { id:"barnes", name:"Winsome Barnes Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(617) 966-0771",
-      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare; offers transportation." },
+      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare; offers transportation.",
+      status:"wait", avail:"Full around Sept; will notify", last:"2026-08-10",
+      notes:"Replied 8/10: full around that time. Will notify us if a slot becomes available." },
     { id:"calle", name:"Reina Calle Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(617) 441-9334",
       web:"", age:"Home care", seedNotes:"Accepts child-care subsidies; offers transportation." },
@@ -381,7 +385,9 @@
       web:"", age:"Home care", seedNotes:"Licensed home daycare; offers transportation." },
     { id:"dejesus", name:"Jennie DeJesus-Acevedo Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(857) 999-5442",
-      web:"", age:"Home care", seedNotes:"Licensed home daycare." },
+      web:"", age:"Home care", seedNotes:"Licensed home daycare.",
+      status:"out", avail:"Not accepting new applications", last:"2026-08-10",
+      notes:"Replied 8/10: not accepting any new applications at the moment." },
     { id:"greaves", name:"Cynthia Ramsaram Greaves Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(617) 497-5314",
       web:"", age:"Home care (max 8)", seedNotes:"Licensed home daycare; offers transportation." },
@@ -394,15 +400,19 @@
     { id:"cruz", name:"Cristina Cruz Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(857) 236-4413",
       web:"", age:"Home care", seedNotes:"Licensed home daycare." },
-    { id:"cuevas", name:"Hidekel Cuevas Family Child Care", type:"Family",
+    { id:"cuevas", name:"Rayitos de Amor Family Child Care (Hidekel Cuevas)", type:"Family",
       address:"Cambridge, MA", phone:"(857) 236-7905",
-      web:"", age:"Home care", seedNotes:"Licensed home daycare." },
+      web:"", age:"Home care", seedNotes:"Licensed home daycare — 'Rayitos de Amor'.",
+      status:"offer", price:"$120/day", avail:"Opening for his age", last:"2026-08-10",
+      notes:"Replied 8/10: opening available for Arthur's age. $120/day. Hours Mon–Fri 7:30am–4:30pm. Happy to talk; visits welcome." },
     { id:"lee", name:"Melissa Lee Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(857) 452-2293",
       web:"", age:"Home care", seedNotes:"Licensed home daycare." },
     { id:"lugo", name:"Mariela Lugo Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(857) 880-7901",
-      web:"", age:"Home care", seedNotes:"Licensed home daycare." }
+      web:"", age:"Home care", seedNotes:"Licensed home daycare. Bilingual program.",
+      status:"offer", price:"$600/wk", avail:"1 opening from Sept", last:"2026-08-10",
+      notes:"Replied 8/10: one opening. $600/week incl. breakfast, lunch & snack. Hours 8:00am–5:00pm. Bilingual. Visits can be arranged after 5:00pm." }
   ];
 
   // Fields the user can edit (persisted per id, merged onto SEED)
@@ -422,8 +432,22 @@
   function allPlaces() {
     return SEED.concat(state.userAdded);
   }
+  function findPlace(id) {
+    var list = allPlaces();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
   function getEdit(id) {
-    if (!state.edits[id]) state.edits[id] = { status: "new", price: "", avail: "", last: "", notes: "" };
+    if (!state.edits[id]) {
+      var p = findPlace(id) || {};
+      state.edits[id] = {
+        status: p.status || "new",
+        price: p.price || "",
+        avail: p.avail || "",
+        last: p.last || "",
+        notes: p.notes || ""
+      };
+    }
     return state.edits[id];
   }
 
