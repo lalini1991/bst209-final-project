@@ -274,14 +274,14 @@
       <a href="https://winnie.com/cambridge/daycares" target="_blank" rel="noopener">Winnie</a>.
     </p>
     <p><b>Free placement help:</b> Cambridge Office of Early Childhood — Nicole Johnson-Negron, Preschool Program Manager, <a href="tel:6173499716">(617) 349-9716</a>. For subsidies: Child Care Choices of Boston, <a href="tel:6175425437">(617) 542-5437</a>.</p>
-    <p>This is a personal planning tool. Details (phone, price, openings) change often and should be confirmed with each provider. Your edits are stored only in this browser (localStorage) — use <b>Export</b> to keep a copy.</p>
+    <p>This is a personal planning tool. Details (phone, price, openings) change often and should be confirmed with each provider. Your edits are saved automatically in this browser and are kept even when the list is updated. To keep an off-device backup, tap <b>Export</b> now and then.</p>
   </footer>
 </div>
 
 <script>
 (function () {
   "use strict";
-  var STORE_KEY = "cambridge-toddler-care-v4";
+  var STORE_KEY = "cambridge-toddler-care";
   var MSG_KEY = STORE_KEY + "-msg";
   var SUBJECT = "Full-time care for our son Arthur (2) from September";
   var DEFAULT_MSG = "Hello! We're Lara & Marcus, parents to Arthur (born 3 July 2024 — he's 2). I'm doing my doctorate at Harvard and Marcus runs his own business, and we're looking for full-day care, Monday to Friday, starting in September. Do you have a space for his age group? If so, could you let us know your cost, and whether we could come by to visit? Thank you so much! — Lara & Marcus, [your number]";
@@ -402,7 +402,9 @@
       web:"", age:"Home care", seedNotes:"Licensed since 2008, North Cambridge." },
     { id:"cruz", name:"Cristina Cruz Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(857) 236-4413",
-      web:"", age:"Home care", seedNotes:"Licensed home daycare." },
+      web:"", age:"Home care", seedNotes:"Licensed home daycare.",
+      status:"call", price:"$500/wk", avail:"Asked us to call back", last:"2026-08-10",
+      notes:"Spoke by phone 8/10 (~4:21pm): rate ~$500/week; asked us to call her back. → Call back to confirm Sept availability & book a visit." },
     { id:"cuevas", name:"Rayitos de Amor Family Child Care (Hidekel Cuevas)", type:"Family",
       address:"Cambridge, MA", phone:"(857) 236-7905",
       web:"", age:"Home care", seedNotes:"Licensed home daycare — 'Rayitos de Amor'.",
@@ -430,38 +432,71 @@
   // Fields the user can edit (persisted per id, merged onto SEED)
   var EDITABLE = ["status","price","avail","last","notes"];
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-    catch (e) { return {}; }
-  }
-  function save(state) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-  var state = load(); // { userAdded: [...], edits: { id: {status,price,...} } }
+  // Older builds saved under versioned keys; a key change would orphan (not delete)
+  // the user's notes. We now use ONE stable key and recover from the old ones.
+  var LEGACY_KEYS = ["cambridge-toddler-care-v4", "cambridge-toddler-care-v3", "cambridge-toddler-care-v2", "cambridge-toddler-care-v1"];
+
+  function readKey(k) { try { return JSON.parse(localStorage.getItem(k)) || null; } catch (e) { return null; } }
+  function save(state) { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var state = readKey(STORE_KEY) || {};
   if (!state.edits) state.edits = {};
   if (!state.userAdded) state.userAdded = [];
 
-  function allPlaces() {
-    return SEED.concat(state.userAdded);
-  }
+  function allPlaces() { return SEED.concat(state.userAdded); }
   function findPlace(id) {
     var list = allPlaces();
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
   }
-  function getEdit(id) {
-    if (!state.edits[id]) {
-      var p = findPlace(id) || {};
-      state.edits[id] = {
-        status: p.status || "new",
-        price: p.price || "",
-        avail: p.avail || "",
-        last: p.last || "",
-        notes: p.notes || ""
-      };
-    }
-    return state.edits[id];
+  function seedField(id, f) { var p = findPlace(id) || {}; return p[f]; }
+
+  // One-time recovery: pull genuine user edits from older versioned keys.
+  // Only migrate values the user actually typed (non-empty and different from the
+  // seed default); never overwrite a value already saved under the current key.
+  (function migrateLegacy() {
+    if (state._migrated) return;
+    LEGACY_KEYS.forEach(function (k) {
+      var old = readKey(k); if (!old || !old.userAdded) return;
+      old.userAdded.forEach(function (p) {
+        if (!state.userAdded.some(function (x) { return x.id === p.id; })) state.userAdded.push(p);
+      });
+    });
+    LEGACY_KEYS.forEach(function (k) {
+      var old = readKey(k); if (!old || !old.edits) return;
+      Object.keys(old.edits).forEach(function (id) {
+        var oe = old.edits[id]; if (!oe) return;
+        EDITABLE.forEach(function (f) {
+          var ov = oe[f];
+          if (ov == null || ov === "") return;
+          if (f === "status" && ov === "new") return;
+          if (ov === seedField(id, f)) return;              // was just the baked-in seed value
+          if (!state.edits[id]) state.edits[id] = {};
+          if (state.edits[id][f] == null || state.edits[id][f] === "") state.edits[id][f] = ov;
+        });
+      });
+    });
+    state._migrated = true;
+    save(state);
+    try {
+      if (localStorage.getItem(MSG_KEY) == null) {
+        for (var i = 0; i < LEGACY_KEYS.length; i++) {
+          var m = localStorage.getItem(LEGACY_KEYS[i] + "-msg");
+          if (m) { localStorage.setItem(MSG_KEY, m); break; }
+        }
+      }
+    } catch (e) {}
+  })();
+
+  // Effective value: the user's saved edit wins; otherwise the seed default; else blank.
+  function val(id, f) {
+    var e = state.edits[id];
+    if (e && e[f] != null && e[f] !== "") return e[f];
+    var sv = seedField(id, f);
+    if (sv != null && sv !== "") return sv;
+    return f === "status" ? "new" : "";
   }
+  function ensureEdit(id) { if (!state.edits[id]) state.edits[id] = {}; return state.edits[id]; }
 
   var grid = document.getElementById("grid");
   var statsEl = document.getElementById("stats");
@@ -479,7 +514,7 @@
   function renderStats() {
     var places = allPlaces();
     var counts = { total: places.length, new:0, call:0, tour:0, wait:0, offer:0, out:0 };
-    places.forEach(function (p) { counts[getEdit(p.id).status]++; });
+    places.forEach(function (p) { counts[val(p.id, "status")]++; });
     var tiles = [
       { key:"", n: counts.total, l:"Total options", c:"--accent" },
       { key:"new", n: counts.new, l:"To contact", c:"--s-new" },
@@ -502,29 +537,27 @@
     var q = searchEl.value.trim().toLowerCase();
     var tf = typeEl.value;
     var list = allPlaces().filter(function (p) {
-      var e = getEdit(p.id);
+      var status = val(p.id, "status");
       if (tf && p.type !== tf) return false;
       if (activeStatusFilter) {
-        if (activeStatusFilter === "call") { if (e.status !== "call" && e.status !== "tour") return false; }
-        else if (e.status !== activeStatusFilter) return false;
+        if (activeStatusFilter === "call") { if (status !== "call" && status !== "tour") return false; }
+        else if (status !== activeStatusFilter) return false;
       }
       if (q) {
-        var hay = (p.name + " " + p.address + " " + (e.notes||"") + " " + (p.seedNotes||"")).toLowerCase();
+        var hay = (p.name + " " + p.address + " " + val(p.id, "notes") + " " + (p.seedNotes||"")).toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
     });
     var s = sortEl.value;
     list.sort(function (a, b) {
-      var ea = getEdit(a.id), eb = getEdit(b.id);
       if (s === "name") return a.name.localeCompare(b.name);
       if (s === "price-asc" || s === "price-desc") {
-        var pa = parseFloat(String(ea.price).replace(/[^\d.]/g, "")) || Infinity;
-        var pb = parseFloat(String(eb.price).replace(/[^\d.]/g, "")) || Infinity;
+        var pa = parseFloat(String(val(a.id, "price")).replace(/[^\d.]/g, "")) || Infinity;
+        var pb = parseFloat(String(val(b.id, "price")).replace(/[^\d.]/g, "")) || Infinity;
         return s === "price-asc" ? pa - pb : (pb === Infinity ? -1 : pa === Infinity ? 1 : pb - pa);
       }
-      // status
-      var d = STATUS[ea.status].order - STATUS[eb.status].order;
+      var d = STATUS[val(a.id, "status")].order - STATUS[val(b.id, "status")].order;
       return d !== 0 ? d : a.name.localeCompare(b.name);
     });
     return list;
@@ -538,8 +571,8 @@
   }
 
   function cardHTML(p) {
-    var e = getEdit(p.id);
-    var st = STATUS[e.status];
+    var vStatus = val(p.id, "status"), vPrice = val(p.id, "price"), vAvail = val(p.id, "avail"), vLast = val(p.id, "last"), vNotes = val(p.id, "notes");
+    var st = STATUS[vStatus] || STATUS.new;
     var web = p.web ? '<div class="row"><span class="k">↗</span><a href="' + esc(p.web) + '" target="_blank" rel="noopener">Website</a></div>' : "";
     var seed = p.seedNotes ? '<div class="row"><span class="k">•</span><span class="val" style="color:var(--muted)">' + esc(p.seedNotes) + '</span></div>' : "";
     var digits = String(p.phone || "").replace(/[^\d+]/g, "");
@@ -570,11 +603,11 @@
         '</div>' +
         acts +
         '<div class="fields">' +
-          '<div class="fld"><label>Status</label>' + statusSelect(p.id, e.status) + '</div>' +
-          '<div class="fld"><label>Est. price / mo</label><input class="price-in js-edit" data-id="' + p.id + '" data-f="price" value="' + esc(e.price) + '" placeholder="$ —" inputmode="numeric"></div>' +
-          '<div class="fld"><label>Availability</label><input class="js-edit" data-id="' + p.id + '" data-f="avail" value="' + esc(e.avail) + '" placeholder="e.g. Sept spot / waitlist"></div>' +
-          '<div class="fld"><label>Last contacted</label><input class="js-edit" data-id="' + p.id + '" data-f="last" type="date" value="' + esc(e.last) + '"></div>' +
-          '<div class="fld full"><label>Notes</label><textarea class="js-edit" data-id="' + p.id + '" data-f="notes" placeholder="Who you spoke to, cost, vibe, next step…">' + esc(e.notes) + '</textarea></div>' +
+          '<div class="fld"><label>Status</label>' + statusSelect(p.id, vStatus) + '</div>' +
+          '<div class="fld"><label>Est. price / mo</label><input class="price-in js-edit" data-id="' + p.id + '" data-f="price" value="' + esc(vPrice) + '" placeholder="$ —" inputmode="numeric"></div>' +
+          '<div class="fld"><label>Availability</label><input class="js-edit" data-id="' + p.id + '" data-f="avail" value="' + esc(vAvail) + '" placeholder="e.g. Sept spot / waitlist"></div>' +
+          '<div class="fld"><label>Last contacted</label><input class="js-edit" data-id="' + p.id + '" data-f="last" type="date" value="' + esc(vLast) + '"></div>' +
+          '<div class="fld full"><label>Notes</label><textarea class="js-edit" data-id="' + p.id + '" data-f="notes" placeholder="Who you spoke to, cost, vibe, next step…">' + esc(vNotes) + '</textarea></div>' +
         '</div>' +
         '<div class="foot">' +
           '<span class="saved-tick" data-id="' + p.id + '">✓ Saved</span>' +
@@ -605,14 +638,14 @@
     var el = ev.target;
     if (el.classList.contains("js-edit")) {
       var id = el.getAttribute("data-id"), f = el.getAttribute("data-f");
-      getEdit(id)[f] = el.value; save(state); flash(id);
+      ensureEdit(id)[f] = el.value; save(state); flash(id);
     }
   });
   grid.addEventListener("change", function (ev) {
     var el = ev.target;
     if (el.classList.contains("js-status")) {
       var id = el.getAttribute("data-id");
-      getEdit(id).status = el.value; save(state);
+      ensureEdit(id).status = el.value; save(state);
       // update stripe + pill live without full rerender losing focus elsewhere
       render();
     }
@@ -655,16 +688,16 @@
     var phone = prompt("Phone number? (optional)") || "";
     var id = "u_" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 24) + "_" + state.userAdded.length;
     state.userAdded.push({ id:id, name:name, type:"Center", address:"", phone:phone, web:"", age:"", seedNotes:"", userAdded:true });
-    getEdit(id); save(state); activeStatusFilter = ""; searchEl.value = ""; render();
+    save(state); activeStatusFilter = ""; searchEl.value = ""; render();
     var card = grid.querySelector('.card[data-id="' + CSS.escape(id) + '"]');
     if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   document.getElementById("exportBtn").addEventListener("click", function () {
     var rows = allPlaces().map(function (p) {
-      var e = getEdit(p.id);
       return { name:p.name, type:p.type, phone:p.phone, address:p.address, age:p.age,
-        status:STATUS[e.status].label, price:e.price, availability:e.avail, lastContacted:e.last, notes:e.notes, website:p.web };
+        status:(STATUS[val(p.id, "status")] || STATUS.new).label, price:val(p.id, "price"),
+        availability:val(p.id, "avail"), lastContacted:val(p.id, "last"), notes:val(p.id, "notes"), website:p.web };
     });
     var blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
     var a = document.createElement("a");
