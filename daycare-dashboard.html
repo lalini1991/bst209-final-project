@@ -317,12 +317,54 @@
     { id:"zarchi", name:"Elka Zarchi Family Child Care", type:"Family",
       address:"Banks St, Cambridge, MA 02138", phone:"(617) 834-5407",
       web:"", age:"Group home (max 10)", seedNotes:"Larger licensed group home near Harvard Sq — bigger capacity than most home daycares." },
-    { id:"snj", name:"S & J Family Day Care", type:"Family",
+    { id:"snj", name:"S & J's Daycare", type:"Family",
       address:"Gladstone St, Cambridge, MA 02140", phone:"(617) 348-6465",
-      web:"", age:"Home care", seedNotes:"Established licensed home daycare (since 1996), North Cambridge." },
+      web:"http://sandjhomedaycare.com/", age:"Home care", seedNotes:"Established licensed home daycare (since 1996), North Cambridge. Rated 2.0★ (1 review)." },
     { id:"barnes", name:"Winsome Barnes Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(617) 966-0771",
+      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare; offers transportation." },
+    { id:"calle", name:"Reina Calle Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(617) 441-9334",
+      web:"", age:"Home care", seedNotes:"Accepts child-care subsidies; offers transportation." },
+    { id:"smith", name:"Christina Smith Family Child Care", type:"Family",
+      address:"The Port, Cambridge, MA", phone:"(857) 829-4097",
+      web:"", age:"Home care", seedNotes:"In The Port. Accepts child-care subsidies; offers transportation." },
+    { id:"holder", name:"Dian M. Holder Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(617) 945-1250",
+      web:"", age:"Home care", seedNotes:"Accepts child-care subsidies; offers transportation." },
+    { id:"allen", name:"Judy Allen Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(857) 417-5124",
+      web:"", age:"Home care (max 4)", seedNotes:"Small home daycare. Accepts child-care subsidies; offers transportation." },
+    { id:"elhajli", name:"Fouzia Elhajli Family Child Care", type:"Family",
+      address:"Cambridge, MA 02143", phone:"(617) 894-1211",
+      web:"", age:"Home care (max 6)", seedNotes:"Accepts child-care subsidies; offers transportation." },
+    { id:"hocine", name:"Bahia Hocine Family Child Care", type:"Family",
+      address:"Cambridge, MA 02143", phone:"(617) 764-2717",
+      web:"", age:"Home care", seedNotes:"Rated 5.0★ (2 reviews); offers transportation." },
+    { id:"buswell", name:"Emily A. Buswell Family Child Care", type:"Family",
       address:"Cambridge, MA", phone:"(617) 764-5700",
-      web:"", age:"Home care (max 6)", seedNotes:"Small licensed home daycare — confirm exact address & neighborhood when you call." }
+      web:"", age:"Home care (max 10)", seedNotes:"Rated 3.0★ (2 reviews); offers transportation." },
+    { id:"clark", name:"Mary Jo Clark Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(339) 674-8400",
+      web:"", age:"Home care", seedNotes:"Licensed home daycare; offers transportation." },
+    { id:"dejesus", name:"Jennie DeJesus-Acevedo Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(857) 999-5442",
+      web:"", age:"Home care", seedNotes:"Licensed home daycare." },
+    { id:"greaves", name:"Cynthia Ramsaram Greaves Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(617) 497-5314",
+      web:"", age:"Home care (max 8)", seedNotes:"Licensed home daycare; offers transportation." },
+    { id:"perez", name:"Rosa Perez Family Child Care", type:"Family",
+      address:"East Cambridge, MA 02141", phone:"(857) 242-9223",
+      web:"", age:"Home care", seedNotes:"East Cambridge. Accepts child-care subsidies." },
+    { id:"yudon", name:"Tsering Yudon Family Child Care", type:"Family",
+      address:"North Cambridge, MA", phone:"(617) 661-1986",
+      web:"", age:"Home care", seedNotes:"Licensed since 2008, North Cambridge." },
+    { id:"cruz", name:"Cristina Cruz Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(857) 236-4413",
+      web:"", age:"Home care", seedNotes:"Licensed home daycare." },
+    { id:"cuevas", name:"Hidekel Cuevas Family Child Care", type:"Family",
+      address:"Cambridge, MA", phone:"(857) 236-7905",
+      web:"", age:"Home care", seedNotes:"Licensed home daycare." }
   ];
 
   // Fields the user can edit (persisted per id, merged onto SEED)
@@ -434,7 +476,9 @@
         '</div>' +
         '<span class="status-pill" style="color:var(' + st.c + ');background:var(' + st.w + ')">' + st.label + '</span>' +
         '<div class="meta">' +
-          '<div class="row"><span class="k">☎</span><a href="' + telHref(p.phone) + '">' + esc(p.phone) + '</a></div>' +
+          (p.phone
+            ? '<div class="row"><span class="k">☎</span><a href="' + telHref(p.phone) + '">' + esc(p.phone) + '</a></div>'
+            : '<div class="row"><span class="k">☎</span><span class="val" style="color:var(--faint)">No public number — look up in EEC directory</span></div>') +
           '<div class="row"><span class="k">⌂</span><span class="val">' + esc(p.address) + '</span></div>' +
           '<div class="row"><span class="k">◷</span><span class="val" style="color:var(--muted)">' + esc(p.age) + '</span></div>' +
           web + seed +
