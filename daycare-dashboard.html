@@ -281,7 +281,7 @@
 <script>
 (function () {
   "use strict";
-  var STORE_KEY = "cambridge-toddler-care-v3";
+  var STORE_KEY = "cambridge-toddler-care-v4";
   var MSG_KEY = STORE_KEY + "-msg";
   var SUBJECT = "Full-time care for our son Arthur (2) from September";
   var DEFAULT_MSG = "Hello! We're Lara & Marcus, parents to Arthur (born 3 July 2024 — he's 2). I'm doing my doctorate at Harvard and Marcus runs his own business, and we're looking for full-day care, Monday to Friday, starting in September. Do you have a space for his age group? If so, could you let us know your cost, and whether we could come by to visit? Thank you so much! — Lara & Marcus, [your number]";
@@ -417,7 +417,14 @@
       address:"Cambridge, MA", phone:"(857) 880-7901",
       web:"", age:"Home care", seedNotes:"Licensed home daycare. Bilingual program.",
       status:"offer", price:"$600/wk", avail:"1 opening from Sept", last:"2026-08-10",
-      notes:"Replied 8/10: one opening. $600/week incl. breakfast, lunch & snack. Hours 8:00am–5:00pm. Bilingual. Visits can be arranged after 5:00pm." }
+      notes:"Replied 8/10: one opening. $600/week incl. breakfast, lunch & snack. Hours 8:00am–5:00pm. Bilingual. Visits can be arranged after 5:00pm." },
+    { id:"oec", name:"Cambridge Office of Early Childhood — Placement Help", type:"Resource",
+      address:"1972 Massachusetts Ave, Cambridge, MA 02140", phone:"(617) 349-9716",
+      web:"https://earlychildhoodcambridge.org/for-families/", email:"njohnson@cpsd.us",
+      age:"City placement & subsidy help",
+      seedNotes:"City/CPS office that helps families find childcare placement & financial assistance. Contact: Nicole Johnson-Negron, Preschool Program Manager. General CPP line (617) 349-1798, cpp@cpsd.us. Note: CPP public preschool is mostly ages 3+ (apply Oct 1–Nov 14); for now they help via referrals & subsidies.",
+      status:"call", avail:"Referred by Christina Smith", last:"2026-08-10",
+      notes:"Email drafted — ask about: openings for his age from Sept, subsidy/financial-assistance eligibility, and CPP timeline for when Arthur turns 3. To: njohnson@cpsd.us, cc cpp@cpsd.us." }
   ];
 
   // Fields the user can edit (persisted per id, merged onto SEED)
@@ -550,7 +557,7 @@
       '<div class="body">' +
         '<div class="top">' +
           '<h3>' + esc(p.name) + '</h3>' +
-          '<span class="badge-type">' + (p.type === "Family" ? "Home care" : "Center") + '</span>' +
+          '<span class="badge-type">' + (p.type === "Family" ? "Home care" : (p.type === "Resource" ? "Resource" : "Center")) + '</span>' +
         '</div>' +
         '<span class="status-pill" style="color:var(' + st.c + ');background:var(' + st.w + ')">' + st.label + '</span>' +
         '<div class="meta">' +
