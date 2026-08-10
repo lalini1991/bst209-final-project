@@ -215,10 +215,12 @@
     </div>
     <div class="toolbtns">
       <button class="btn" id="addBtn">+ Add a place</button>
-      <button class="btn" id="exportBtn">Export</button>
+      <button class="btn" id="exportBtn">Back up</button>
+      <button class="btn" id="importBtn">Restore</button>
       <button class="btn" id="printBtn">Print / PDF</button>
       <button class="btn" id="themeBtn" aria-label="Toggle dark mode">Theme</button>
       <button class="btn" id="resetBtn">Reset</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
   </header>
 
@@ -694,16 +696,50 @@
   });
 
   document.getElementById("exportBtn").addEventListener("click", function () {
-    var rows = allPlaces().map(function (p) {
-      return { name:p.name, type:p.type, phone:p.phone, address:p.address, age:p.age,
-        status:(STATUS[val(p.id, "status")] || STATUS.new).label, price:val(p.id, "price"),
-        availability:val(p.id, "avail"), lastContacted:val(p.id, "last"), notes:val(p.id, "notes"), website:p.web };
-    });
-    var blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+    var backup = {
+      app: "cambridge-toddler-care",
+      savedAt: new Date().toISOString(),
+      edits: state.edits,
+      userAdded: state.userAdded,
+      message: msgText(),
+      rows: allPlaces().map(function (p) {
+        return { name:p.name, type:p.type, phone:p.phone, address:p.address, age:p.age,
+          status:(STATUS[val(p.id, "status")] || STATUS.new).label, price:val(p.id, "price"),
+          availability:val(p.id, "avail"), lastContacted:val(p.id, "last"), notes:val(p.id, "notes"), website:p.web };
+      })
+    };
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "cambridge-toddler-care.json";
+    a.download = "cambridge-toddler-care-backup.json";
     a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById("importBtn").addEventListener("click", function () {
+    document.getElementById("importFile").click();
+  });
+  document.getElementById("importFile").addEventListener("change", function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (!data || (!data.edits && !data.userAdded)) { alert("This file doesn't look like a tracker backup."); ev.target.value = ""; return; }
+        if (!confirm("Restore from this backup? Saved notes and statuses will be merged in (the backup wins on any conflict).")) { ev.target.value = ""; return; }
+        if (data.userAdded) data.userAdded.forEach(function (p) {
+          if (!state.userAdded.some(function (x) { return x.id === p.id; })) state.userAdded.push(p);
+        });
+        if (data.edits) Object.keys(data.edits).forEach(function (id) {
+          state.edits[id] = Object.assign({}, state.edits[id], data.edits[id]);
+        });
+        if (data.message) { try { localStorage.setItem(MSG_KEY, data.message); } catch (e) {} var t = document.getElementById("tmpl"); if (t) t.value = data.message; }
+        save(state); render();
+        alert("Restored ✓");
+      } catch (e) { alert("Sorry — couldn't read that file."); }
+      ev.target.value = "";
+    };
+    reader.readAsText(f);
   });
 
   document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
