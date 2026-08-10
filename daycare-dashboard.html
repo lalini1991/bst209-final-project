@@ -217,7 +217,7 @@
       <button class="btn" id="addBtn">+ Add a place</button>
       <button class="btn" id="exportBtn">Back up</button>
       <button class="btn" id="importBtn">Restore</button>
-      <button class="btn" id="printBtn">Print / PDF</button>
+      <button class="btn" id="summaryBtn">Save summary</button>
       <button class="btn" id="themeBtn" aria-label="Toggle dark mode">Theme</button>
       <button class="btn" id="resetBtn">Reset</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -276,7 +276,7 @@
       <a href="https://winnie.com/cambridge/daycares" target="_blank" rel="noopener">Winnie</a>.
     </p>
     <p><b>Free placement help:</b> Cambridge Office of Early Childhood — Nicole Johnson-Negron, Preschool Program Manager, <a href="tel:6173499716">(617) 349-9716</a>. For subsidies: Child Care Choices of Boston, <a href="tel:6175425437">(617) 542-5437</a>.</p>
-    <p>This is a personal planning tool. Details (phone, price, openings) change often and should be confirmed with each provider. Your edits are saved automatically in this browser and are kept even when the list is updated. To keep an off-device backup, tap <b>Export</b> now and then.</p>
+    <p>This is a personal planning tool. Details (phone, price, openings) change often and should be confirmed with each provider. Your edits are saved automatically in this browser and are kept even when the list is updated. To keep an off-device copy, tap <b>Back up</b> now and then (and <b>Restore</b> to reload it).</p>
   </footer>
 </div>
 
@@ -695,6 +695,52 @@
     if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
+  // Save a file. Inside the claude.ai sandbox, normal downloads are blocked, so
+  // use the platform's downloads capability; fall back to a blob link when the
+  // page is opened as a plain local file.
+  function toastBtn(id, text) {
+    var b = document.getElementById(id); if (!b) return;
+    var o = b.textContent; b.textContent = text; setTimeout(function () { b.textContent = o; }, 1400);
+  }
+  function blobDownload(filename, data) {
+    try {
+      var blob = new Blob([data], { type: "application/octet-stream" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      return true;
+    } catch (e) { return false; }
+  }
+  function saveFile(filename, data, btnId) {
+    if (window.claude && window.claude.downloads && typeof window.claude.downloads.save === "function") {
+      window.claude.downloads.save({ filename: filename, data: data }).then(
+        function () { if (btnId) toastBtn(btnId, "✓ Saved"); },
+        function (err) {
+          if (err && err.code === "declined") return;
+          if (!blobDownload(filename, data)) alert("Couldn't save here. Open the tracker in Safari/Chrome (tap the ↗ / open-in-browser icon) and try again.");
+        }
+      );
+    } else if (!blobDownload(filename, data)) {
+      alert("Couldn't save here. Open the tracker in Safari/Chrome and try again.");
+    }
+  }
+  function summaryText() {
+    var lines = ["Cambridge Toddler Care — tracker export", "Saved " + new Date().toLocaleString(), ""];
+    allPlaces().forEach(function (p) {
+      lines.push("• " + p.name + "  [" + (STATUS[val(p.id, "status")] || STATUS.new).label + "]");
+      if (p.phone) lines.push("   Phone: " + p.phone);
+      if (p.email) lines.push("   Email: " + p.email);
+      if (p.address) lines.push("   Address: " + p.address);
+      var price = val(p.id, "price"); if (price) lines.push("   Price: " + price);
+      var avail = val(p.id, "avail"); if (avail) lines.push("   Availability: " + avail);
+      var last = val(p.id, "last"); if (last) lines.push("   Last contacted: " + last);
+      var notes = val(p.id, "notes"); if (notes) lines.push("   Notes: " + notes);
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
   document.getElementById("exportBtn").addEventListener("click", function () {
     var backup = {
       app: "cambridge-toddler-care",
@@ -708,11 +754,7 @@
           availability:val(p.id, "avail"), lastContacted:val(p.id, "last"), notes:val(p.id, "notes"), website:p.web };
       })
     };
-    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cambridge-toddler-care-backup.json";
-    a.click(); URL.revokeObjectURL(a.href);
+    saveFile("cambridge-toddler-care-backup.json", JSON.stringify(backup, null, 2), "exportBtn");
   });
 
   document.getElementById("importBtn").addEventListener("click", function () {
@@ -742,7 +784,9 @@
     reader.readAsText(f);
   });
 
-  document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
+  document.getElementById("summaryBtn").addEventListener("click", function () {
+    saveFile("cambridge-toddler-care.txt", summaryText(), "summaryBtn");
+  });
 
   document.getElementById("resetBtn").addEventListener("click", function () {
     if (confirm("Reset all statuses, prices, and notes to the starting list? This clears your saved edits.")) {
