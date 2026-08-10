@@ -169,6 +169,23 @@
   .saved-tick { font-size: .72rem; color: var(--s-offer); font-weight: 700; opacity: 0; transition: opacity .2s; }
   .saved-tick.show { opacity: 1; }
 
+  /* Message template panel */
+  .tmpl { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 16px; margin: 18px 0 4px; }
+  .tmpl .th { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; margin-bottom: 9px; }
+  .tmpl .th b { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; }
+  .tmpl .th span { color: var(--muted); font-size: .78rem; }
+  .tmpl textarea { width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: .88rem; line-height: 1.5; resize: vertical; min-height: 104px; color: var(--ink); font-family: inherit; }
+  .tmpl .row2 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 9px; }
+  .tmpl .row2 .hint { color: var(--faint); font-size: .74rem; margin-left: auto; }
+
+  /* Per-card action buttons */
+  .actions { display: flex; gap: 7px; flex-wrap: wrap; }
+  .act { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-size: .8rem; font-weight: 700; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line-strong); color: var(--ink); background: var(--surface); transition: border-color .15s, background .15s, transform .05s; }
+  .act:hover { border-color: var(--accent); }
+  .act:active { transform: translateY(1px); }
+  .act.call { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .act.text { background: var(--s-call-wash); border-color: color-mix(in srgb, var(--s-call) 35%, transparent); color: var(--s-call); }
+
   footer.foot-note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; line-height: 1.6; }
   footer.foot-note a { color: var(--accent-ink); }
   .empty { text-align: center; color: var(--muted); padding: 50px 20px; font-style: italic; }
@@ -212,6 +229,16 @@
     <div>Centers rarely post toddler tuition online, so price fields start blank — fill them in as you call. For rough budgeting, full-time center care in Cambridge commonly runs <b>~$2,200–$3,200/mo</b>; licensed family childcare is often lower. Financial help: <b>Child Care Choices of Boston (617) 542-5437</b>. Data below was gathered from public listings on <span style="white-space:nowrap">2026-08-09</span> — <b>verify phone &amp; availability directly</b>.</div>
   </div>
 
+  <section class="tmpl">
+    <div class="th"><b>✉️ Your message to send</b><span>Edit once — the Text &amp; Email buttons on every card use it.</span></div>
+    <textarea id="tmpl" aria-label="Message to send"></textarea>
+    <div class="row2">
+      <button class="btn primary" id="copyMsg">Copy message</button>
+      <button class="btn" id="resetMsg">Reset message</button>
+      <span class="hint">Replace [your number] before sending.</span>
+    </div>
+  </section>
+
   <div class="controls">
     <div class="field">
       <input class="search" id="search" type="search" placeholder="Search name, address, notes…" aria-label="Search">
@@ -254,6 +281,11 @@
 (function () {
   "use strict";
   var STORE_KEY = "cambridge-toddler-care-v1";
+  var MSG_KEY = STORE_KEY + "-msg";
+  var SUBJECT = "Full-time care for our son Arthur (2) from September";
+  var DEFAULT_MSG = "Hello! We're Lara & Marcus, parents to Arthur (born 3 July 2024 — he's 2). I'm doing my doctorate at Harvard and Marcus runs his own business, and we're looking for full-day care, Monday to Friday, starting in September. Do you have a space for his age group? If so, could you let us know your cost, and whether we could come by to visit? Thank you so much! — Lara & Marcus, [your number]";
+  function loadMsg() { try { return localStorage.getItem(MSG_KEY) || DEFAULT_MSG; } catch (e) { return DEFAULT_MSG; } }
+  function msgText() { var t = document.getElementById("tmpl"); return t ? t.value : loadMsg(); }
 
   var STATUS = {
     new:   { label: "To contact",  c: "--s-new",   w: "--s-new-wash",   order: 0 },
@@ -269,23 +301,23 @@
   var SEED = [
     { id:"kindercare", name:"Cambridge KinderCare", type:"Center",
       address:"100 Cambridgepark Dr, Cambridge, MA 02140", phone:"(617) 876-0102",
-      web:"https://www.kindercare.com/our-centers/cambridge/ma/301902",
+      web:"https://www.kindercare.com/our-centers/cambridge/ma/301902", email:"care@kindercare.com",
       age:"Toddler 1–2 yr + Discovery 2–3 yr", seedNotes:"National chain. Open 6:30a–6:00p. Ask about the 2s (Discovery Preschool) room." },
     { id:"bh-kendall", name:"Bright Horizons at Kendall Square", type:"Center",
       address:"286 Cardinal Medeiros Ave, Cambridge, MA 02141", phone:"(617) 336-4490",
-      web:"https://child-care-preschool.brighthorizons.com/ma/cambridge/kendallsquare",
+      web:"https://child-care-preschool.brighthorizons.com/ma/cambridge/kendallsquare", email:"wearelistening@brighthorizons.com",
       age:"2 months – 5 yr", seedNotes:"Some MIT/Tufts/local employers get priority access — ask if your employer partners with BH." },
     { id:"bh-massave", name:"Bright Horizons at Mass Ave", type:"Center",
       address:"2465 Mass Ave, Cambridge, MA 02140", phone:"(617) 336-4491",
-      web:"https://www.brighthorizons.com/daycare-centers/ma/cambridge/2465-mass-ave-02140",
+      web:"https://www.brighthorizons.com/daycare-centers/ma/cambridge/2465-mass-ave-02140", email:"wearelistening@brighthorizons.com",
       age:"2 months – 5 yr", seedNotes:"North Cambridge / Porter Square area." },
     { id:"cportcc", name:"Cambridgeport Children's Center", type:"Center",
       address:"65R Chestnut St, Cambridge, MA 02139", phone:"(617) 868-4275",
-      web:"https://www.finditcambridge.org/",
-      age:"Toddler – preschool", seedNotes:"Reggio-inspired, values diversity. Hours ~8:15a–5:30p." },
+      web:"https://www.finditcambridge.org/", email:"Carolyn@totlot.org",
+      age:"Toddler – preschool", seedNotes:"Reggio-inspired, values diversity. Hours ~8:15a–5:30p. Enrollment via director Carolyn." },
     { id:"oxfordcoop", name:"Oxford Street Day Care Cooperative", type:"Center",
       address:"25 Francis Ave (Shannon Hall), Cambridge, MA 02138", phone:"(617) 547-3175",
-      web:"https://oxfordstcoop.wordpress.com/",
+      web:"https://oxfordstcoop.wordpress.com/", email:"osdc.director@campus-cc.org",
       age:"Toddler – preschool", seedNotes:"Parent cooperative on Harvard campus — may involve parent participation. Popular, expect a waitlist." },
     { id:"everbrook", name:"Everbrook Academy of Cambridge (TSC)", type:"Center",
       address:"220 Binney St, Cambridge, MA 02142", phone:"(617) 494-5382",
@@ -293,7 +325,7 @@
       age:"Infant, Toddler, Twos, Preschool", seedNotes:"Kendall Square. Distinct 'Twos' classroom for 2-year-olds." },
     { id:"pota", name:"Cambridge Preschool of the Arts (Inman)", type:"Center",
       address:"243 Hampshire St, Cambridge, MA 02139", phone:"(617) 547-9189",
-      web:"https://www.cambridgepreschool.org/",
+      web:"https://www.cambridgepreschool.org/", email:"Office@cambridgepreschool.org",
       age:"Toddler 15 mo – 2.8 yr", seedNotes:"Arts-focused. Multiple locations — confirm which one has a 2s opening." },
     { id:"nurtury", name:"Nurtury at Harvard Street", type:"Center",
       address:"Temp: 359 Broadway (enter 8 Fayette St), Cambridge, MA 02139", phone:"(617) 492-3935",
@@ -474,6 +506,17 @@
     var st = STATUS[e.status];
     var web = p.web ? '<div class="row"><span class="k">↗</span><a href="' + esc(p.web) + '" target="_blank" rel="noopener">Website</a></div>' : "";
     var seed = p.seedNotes ? '<div class="row"><span class="k">•</span><span class="val" style="color:var(--muted)">' + esc(p.seedNotes) + '</span></div>' : "";
+    var digits = String(p.phone || "").replace(/[^\d+]/g, "");
+    var body = encodeURIComponent(msgText());
+    var acts = '<div class="actions">';
+    if (p.phone) {
+      acts += '<a class="act call" href="tel:' + digits + '">📞 Call</a>';
+      acts += '<a class="act text" href="sms:' + digits + '?&body=' + body + '">💬 Text</a>';
+    }
+    if (p.email) {
+      acts += '<a class="act email" href="mailto:' + esc(p.email) + '?subject=' + encodeURIComponent(SUBJECT) + '&body=' + body + '">✉️ Email</a>';
+    }
+    acts += '</div>';
     return '<article class="card" style="--st:var(' + st.c + ')" data-id="' + p.id + '">' +
       '<div class="body">' +
         '<div class="top">' +
@@ -489,6 +532,7 @@
           '<div class="row"><span class="k">◷</span><span class="val" style="color:var(--muted)">' + esc(p.age) + '</span></div>' +
           web + seed +
         '</div>' +
+        acts +
         '<div class="fields">' +
           '<div class="fld"><label>Status</label>' + statusSelect(p.id, e.status) + '</div>' +
           '<div class="fld"><label>Est. price / mo</label><input class="price-in js-edit" data-id="' + p.id + '" data-f="price" value="' + esc(e.price) + '" placeholder="$ —" inputmode="numeric"></div>' +
@@ -615,6 +659,27 @@
     var next = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     try { localStorage.setItem(STORE_KEY + "-theme", next); } catch (e) {}
+  });
+
+  // Message template panel
+  var tmplEl = document.getElementById("tmpl");
+  tmplEl.value = loadMsg();
+  function toastCopy() { var b = document.getElementById("copyMsg"); var o = b.textContent; b.textContent = "✓ Copied"; setTimeout(function () { b.textContent = o; }, 1200); }
+  function fallbackCopy(el) { el.focus(); el.select(); try { document.execCommand("copy"); toastCopy(); } catch (e) {} }
+  tmplEl.addEventListener("input", function () {
+    try { localStorage.setItem(MSG_KEY, tmplEl.value); } catch (e) {}
+    render();
+  });
+  document.getElementById("copyMsg").addEventListener("click", function () {
+    var txt = tmplEl.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(toastCopy, function () { fallbackCopy(tmplEl); });
+    } else { fallbackCopy(tmplEl); }
+  });
+  document.getElementById("resetMsg").addEventListener("click", function () {
+    tmplEl.value = DEFAULT_MSG;
+    try { localStorage.setItem(MSG_KEY, DEFAULT_MSG); } catch (e) {}
+    render();
   });
 
   render();
