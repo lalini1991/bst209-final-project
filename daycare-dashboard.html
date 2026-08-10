@@ -186,6 +186,15 @@
   .act.call { background: var(--accent); border-color: var(--accent); color: #fff; }
   .act.text { background: var(--s-call-wash); border-color: color-mix(in srgb, var(--s-call) 35%, transparent); color: var(--s-call); }
 
+  /* Backup / restore panel */
+  .io { position: fixed; inset: 0; background: rgba(20,16,10,.55); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
+  .io[hidden] { display: none; }
+  .io-box { background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 560px; max-height: 90vh; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .io-title { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; }
+  .io-desc { margin: 0; color: var(--muted); font-size: .85rem; }
+  .io-text { width: 100%; flex: 1; min-height: 170px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: .78rem; line-height: 1.4; color: var(--ink); font-family: ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+  .io-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
   footer.foot-note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; line-height: 1.6; }
   footer.foot-note a { color: var(--accent-ink); }
   .empty { text-align: center; color: var(--muted); padding: 50px 20px; font-style: italic; }
@@ -220,7 +229,6 @@
       <button class="btn" id="summaryBtn">Save summary</button>
       <button class="btn" id="themeBtn" aria-label="Toggle dark mode">Theme</button>
       <button class="btn" id="resetBtn">Reset</button>
-      <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
   </header>
 
@@ -695,36 +703,6 @@
     if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
-  // Save a file. Inside the claude.ai sandbox, normal downloads are blocked, so
-  // use the platform's downloads capability; fall back to a blob link when the
-  // page is opened as a plain local file.
-  function toastBtn(id, text) {
-    var b = document.getElementById(id); if (!b) return;
-    var o = b.textContent; b.textContent = text; setTimeout(function () { b.textContent = o; }, 1400);
-  }
-  function blobDownload(filename, data) {
-    try {
-      var blob = new Blob([data], { type: "application/octet-stream" });
-      var a = document.createElement("a");
-      a.href = URL.createObjectURL(blob); a.download = filename;
-      document.body.appendChild(a); a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-      return true;
-    } catch (e) { return false; }
-  }
-  function saveFile(filename, data, btnId) {
-    if (window.claude && window.claude.downloads && typeof window.claude.downloads.save === "function") {
-      window.claude.downloads.save({ filename: filename, data: data }).then(
-        function () { if (btnId) toastBtn(btnId, "✓ Saved"); },
-        function (err) {
-          if (err && err.code === "declined") return;
-          if (!blobDownload(filename, data)) alert("Couldn't save here. Open the tracker in Safari/Chrome (tap the ↗ / open-in-browser icon) and try again.");
-        }
-      );
-    } else if (!blobDownload(filename, data)) {
-      alert("Couldn't save here. Open the tracker in Safari/Chrome and try again.");
-    }
-  }
   function summaryText() {
     var lines = ["Cambridge Toddler Care — tracker export", "Saved " + new Date().toLocaleString(), ""];
     allPlaces().forEach(function (p) {
@@ -740,9 +718,8 @@
     });
     return lines.join("\n");
   }
-
-  document.getElementById("exportBtn").addEventListener("click", function () {
-    var backup = {
+  function backupJSON() {
+    return JSON.stringify({
       app: "cambridge-toddler-care",
       savedAt: new Date().toISOString(),
       edits: state.edits,
@@ -753,40 +730,79 @@
           status:(STATUS[val(p.id, "status")] || STATUS.new).label, price:val(p.id, "price"),
           availability:val(p.id, "avail"), lastContacted:val(p.id, "last"), notes:val(p.id, "notes"), website:p.web };
       })
-    };
-    saveFile("cambridge-toddler-care-backup.json", JSON.stringify(backup, null, 2), "exportBtn");
-  });
+    }, null, 2);
+  }
 
-  document.getElementById("importBtn").addEventListener("click", function () {
-    document.getElementById("importFile").click();
-  });
-  document.getElementById("importFile").addEventListener("change", function (ev) {
-    var f = ev.target.files && ev.target.files[0];
-    if (!f) return;
-    var reader = new FileReader();
-    reader.onload = function () {
-      try {
-        var data = JSON.parse(reader.result);
-        if (!data || (!data.edits && !data.userAdded)) { alert("This file doesn't look like a tracker backup."); ev.target.value = ""; return; }
-        if (!confirm("Restore from this backup? Saved notes and statuses will be merged in (the backup wins on any conflict).")) { ev.target.value = ""; return; }
-        if (data.userAdded) data.userAdded.forEach(function (p) {
-          if (!state.userAdded.some(function (x) { return x.id === p.id; })) state.userAdded.push(p);
-        });
-        if (data.edits) Object.keys(data.edits).forEach(function (id) {
-          state.edits[id] = Object.assign({}, state.edits[id], data.edits[id]);
-        });
-        if (data.message) { try { localStorage.setItem(MSG_KEY, data.message); } catch (e) {} var t = document.getElementById("tmpl"); if (t) t.value = data.message; }
-        save(state); render();
-        alert("Restored ✓");
-      } catch (e) { alert("Sorry — couldn't read that file."); }
-      ev.target.value = "";
-    };
-    reader.readAsText(f);
-  });
+  // Copy/paste backup panel — works inside the claude.ai sandbox and while the
+  // page is shared publicly (no file download needed).
+  var io = {};
+  function buildIO() {
+    if (io.panel) return;
+    var ov = document.createElement("div"); ov.className = "io"; ov.hidden = true;
+    ov.innerHTML =
+      '<div class="io-box">' +
+        '<div class="io-title"></div>' +
+        '<p class="io-desc"></p>' +
+        '<textarea class="io-text" spellcheck="false"></textarea>' +
+        '<div class="io-actions"><button class="btn io-close">Close</button><button class="btn primary io-primary"></button></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    io.panel = ov;
+    io.title = ov.querySelector(".io-title");
+    io.desc = ov.querySelector(".io-desc");
+    io.text = ov.querySelector(".io-text");
+    io.primary = ov.querySelector(".io-primary");
+    ov.querySelector(".io-close").addEventListener("click", closeIO);
+    ov.addEventListener("click", function (e) { if (e.target === ov) closeIO(); });
+    io.primary.addEventListener("click", function () {
+      if (io.mode === "restore") doRestore(io.text.value);
+      else copyText(io.text, io.primary);
+    });
+  }
+  function closeIO() { if (io.panel) io.panel.hidden = true; }
+  function copyText(area, btn) {
+    var done = function () { var o = btn.textContent; btn.textContent = "✓ Copied"; setTimeout(function () { btn.textContent = o; }, 1400); };
+    var manual = function () { area.focus(); area.select(); try { document.execCommand("copy"); done(); } catch (e) { alert("Select all the text above and copy it manually."); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(area.value).then(done, manual);
+    else manual();
+  }
+  function openBackup() {
+    buildIO(); io.mode = "backup";
+    io.title.textContent = "Back up your notes";
+    io.desc.textContent = "This is all your data. Tap Copy, then paste it into your Notes app or email it to yourself. To bring it back later, tap Restore and paste it in.";
+    io.text.value = backupJSON(); io.text.readOnly = true; io.primary.textContent = "Copy";
+    io.panel.hidden = false; io.text.focus(); io.text.select();
+  }
+  function openSummary() {
+    buildIO(); io.mode = "backup";
+    io.title.textContent = "Readable summary";
+    io.desc.textContent = "A plain-text list of every place and your notes. Tap Copy, then paste into Notes or an email.";
+    io.text.value = summaryText(); io.text.readOnly = true; io.primary.textContent = "Copy";
+    io.panel.hidden = false; io.text.focus(); io.text.select();
+  }
+  function openRestore() {
+    buildIO(); io.mode = "restore";
+    io.title.textContent = "Restore from a backup";
+    io.desc.textContent = "Paste a backup you saved earlier, then tap Restore. This only ADDS to your list — it never deletes what's already here.";
+    io.text.value = ""; io.text.readOnly = false; io.primary.textContent = "Restore";
+    io.panel.hidden = false; io.text.focus();
+  }
+  function doRestore(raw) {
+    var data; try { data = JSON.parse(raw); } catch (e) { alert("That doesn't look like a backup — paste the full text you copied earlier."); return; }
+    if (!data || (!data.edits && !data.userAdded)) { alert("That doesn't look like a tracker backup."); return; }
+    if (data.userAdded) data.userAdded.forEach(function (p) {
+      if (!state.userAdded.some(function (x) { return x.id === p.id; })) state.userAdded.push(p);
+    });
+    if (data.edits) Object.keys(data.edits).forEach(function (id) {
+      state.edits[id] = Object.assign({}, state.edits[id], data.edits[id]);
+    });
+    if (data.message) { try { localStorage.setItem(MSG_KEY, data.message); } catch (e) {} var t = document.getElementById("tmpl"); if (t) t.value = data.message; }
+    save(state); render(); closeIO(); alert("Restored ✓");
+  }
 
-  document.getElementById("summaryBtn").addEventListener("click", function () {
-    saveFile("cambridge-toddler-care.txt", summaryText(), "summaryBtn");
-  });
+  document.getElementById("exportBtn").addEventListener("click", openBackup);
+  document.getElementById("importBtn").addEventListener("click", openRestore);
+  document.getElementById("summaryBtn").addEventListener("click", openSummary);
 
   document.getElementById("resetBtn").addEventListener("click", function () {
     if (confirm("Reset all statuses, prices, and notes to the starting list? This clears your saved edits.")) {
