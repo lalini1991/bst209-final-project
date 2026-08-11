@@ -64,8 +64,21 @@
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:12px;
     padding:14px 16px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow); }
   .tile.lead { background:var(--accent-tint); border-color:transparent; }
+  button.tile { font:inherit; text-align:left; color:inherit; }
+  button.tile.filterable { cursor:pointer; transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+  button.tile.filterable:hover { border-color:var(--accent); transform:translateY(-1px); }
+  button.tile.filterable:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  button.tile.filterable[aria-pressed="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); background:var(--accent-tint); }
   .tval { font-family:var(--serif); font-size:1.9rem; font-weight:600; line-height:1; }
   .tlab { font-size:.78rem; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .filterhint { margin:12px 2px 0; font-size:.78rem; color:var(--faint); }
+  .filterbar { display:flex; align-items:center; gap:14px; margin:14px 0 0;
+    background:var(--accent-tint); border-radius:10px; padding:9px 14px; font-size:.85rem; color:var(--accent-ink); font-weight:600; }
+  .clearbtn { font:inherit; font-weight:700; cursor:pointer; margin-left:auto; color:var(--accent-ink);
+    background:var(--surface); border:1px solid var(--border-2); border-radius:20px; padding:5px 13px; }
+  .clearbtn:hover { border-color:var(--accent); }
+  .clearbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .wsgroup[hidden], details.row[hidden] { display:none; }
   .dot { width:9px; height:9px; border-radius:50%; display:inline-block; flex:none; }
   .dot.ok{background:var(--ok);} .dot.research{background:var(--research);}
   .dot.noteligible{background:var(--noteligible);} .dot.dead{background:var(--dead);}
@@ -171,31 +184,36 @@
       pre-revenue clinical-AI governance &amp; post-deployment monitoring venture. A read-only view of
       <b>Funding_Dashboard.xlsx</b> (the single source of truth), generated 2026-08-11.</p>
     <div class="tiles">
-      <div class="tile lead">
+      <button type="button" class="tile lead filterable" data-filter="all" aria-pressed="false">
         <span class="tval">50</span>
-        <span class="tlab">Opportunities tracked</span>
-      </div>
+        <span class="tlab">All opportunities</span>
+      </button>
       
-      <div class="tile">
+      <button type="button" class="tile filterable" data-filter="Eligible" aria-pressed="false">
         <span class="tval">17</span>
         <span class="tlab"><i class="dot ok"></i>Eligible</span>
-      </div>
-      <div class="tile">
+      </button>
+      <button type="button" class="tile filterable" data-filter="Researching" aria-pressed="false">
         <span class="tval">26</span>
         <span class="tlab"><i class="dot research"></i>Researching</span>
-      </div>
-      <div class="tile">
+      </button>
+      <button type="button" class="tile filterable" data-filter="Not eligible" aria-pressed="false">
         <span class="tval">5</span>
         <span class="tlab"><i class="dot noteligible"></i>Not eligible</span>
-      </div>
-      <div class="tile">
+      </button>
+      <button type="button" class="tile filterable" data-filter="Dead" aria-pressed="false">
         <span class="tval">2</span>
         <span class="tlab"><i class="dot dead"></i>Dead</span>
-      </div>
-      <div class="tile">
+      </button>
+      <div class="tile static">
         <span class="tval">3.52</span>
         <span class="tlab">Average fit (of 5)</span>
       </div>
+    </div>
+    <p class="filterhint">Tap a status to filter the pipeline below.</p>
+    <div id="filterbar" class="filterbar" hidden>
+      <span id="filterlabel"></span>
+      <button type="button" id="clearfilter" class="clearbtn">Show all ×</button>
     </div>
   </header>
 
@@ -265,7 +283,7 @@
         <p class="wssub">Equity-free where possible · Harvard, Boston, MA state, MIT, SBDC, NIH · <b>13</b> opportunities</p>
       </div>
       <div class="rows">
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -283,7 +301,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/resources/funding-opportunities" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -301,7 +319,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 0.5-1 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.msbdc.org/sbir/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -319,7 +337,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/funding-opportunities/social-impact" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -337,7 +355,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.healthlabaccelerator.harvard.edu/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -355,7 +373,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 12-20 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/presidents-innovation-challenge" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -373,7 +391,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 5-12 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://nucleate.org/activator/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -391,7 +409,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://masschallenge.org/programs-healthtech/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -409,7 +427,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 10-25 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://solve.mit.edu/challenges" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -427,7 +445,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 80-160 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://seed.nih.gov/small-business-funding/small-business-program-basics/eligibility-criteria" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -445,7 +463,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.healthlabaccelerator.harvard.edu/venture-board" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-noteligible">
+        <details class="row s-noteligible" data-status="Not eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -463,7 +481,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 15-30 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.masslifesciences.com/programs/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-noteligible">
+        <details class="row s-noteligible" data-status="Not eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -481,7 +499,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 10-20 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.masslifesciences.com/programs/massnextgen/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-noteligible">
+        <details class="row s-noteligible" data-status="Not eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 1 of 5" aria-label="Fit 1 of 5"><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -507,7 +525,7 @@
         <p class="wssub">Dilutive by nature · pre-revenue / pre-seed check writers with health or AI theses · <b>26</b> opportunities</p>
       </div>
       <div class="rows">
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -525,7 +543,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.pillar.vc/connect/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -543,7 +561,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://precursorvc.com/startup/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -561,7 +579,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.nina.capital/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -579,7 +597,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.2048.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -597,7 +615,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.afore.vc/pitch" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -615,7 +633,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 1-2 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.january.ventures/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -633,7 +651,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://members.launchpadventuregroup.com/apply" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -651,7 +669,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.hustlefund.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -669,7 +687,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://jsf.co/apply" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -687,7 +705,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.airstreet.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -705,7 +723,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.ycombinator.com/apply" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -723,7 +741,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.villageglobal.com/velocity" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -741,7 +759,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.massmedangels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -759,7 +777,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://alleycorp.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -777,7 +795,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://underscore.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -795,7 +813,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.zettavp.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -813,7 +831,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.aixventures.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -831,7 +849,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://beaconangels.com/candidates/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -849,7 +867,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.hubangels.com/faq.html" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -867,7 +885,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://tbdangels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -885,7 +903,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.susaventures.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -903,7 +921,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.broadway-angels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -921,7 +939,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.basisset.com/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-noteligible">
+        <details class="row s-noteligible" data-status="Not eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -939,7 +957,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.goldenseeds.com/how-to-apply" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-dead">
+        <details class="row s-dead" data-status="Dead">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -957,7 +975,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.406ventures.com/our-focus/healthcare/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-dead">
+        <details class="row s-dead" data-status="Dead">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 1 of 5" aria-label="Fit 1 of 5"><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -983,7 +1001,7 @@
         <p class="wssub">Post-deployment monitoring of clinical AI in LMIC settings · safety &amp; equity framing · <b>11</b> opportunities</p>
       </div>
       <div class="rows">
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -1001,7 +1019,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 1-3 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.drkfoundation.org/apply/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -1019,7 +1037,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.mulagofoundation.org/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-ok">
+        <details class="row s-ok" data-status="Eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
             <span class="rmain">
@@ -1037,7 +1055,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 15-30 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://coefficientgiving.org/funds/global-health-wellbeing-opportunities/request-for-proposals-global-health-and-wellbeing-in-an-era-of-transformative-ai/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1055,7 +1073,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 25-50 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://gcgh.grandchallenges.org/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1073,7 +1091,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 40-80 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://wellcome.org/research-funding/schemes/wellcome-discovery-awards" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1091,7 +1109,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.mcgovern.org/grants/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1109,7 +1127,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.grandchallenges.ca/apply-for-funding/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1127,7 +1145,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.rockefellerfoundation.org/grants/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1145,7 +1163,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://wellcomeleap.org/programs/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-research">
+        <details class="row s-research" data-status="Researching">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1163,7 +1181,7 @@
             <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.fondationbotnar.org/funding-opportunities/" target="_blank" rel="noopener">Official page ↗</a></div>
           </div>
         </details>
-        <details class="row s-noteligible">
+        <details class="row s-noteligible" data-status="Not eligible">
           <summary>
             <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
             <span class="rmain">
@@ -1191,3 +1209,48 @@
     <p>Generated from Funding_Dashboard.xlsx · 2026-08-11. Update the workbook, not this page.</p>
   </footer>
 </div>
+
+<script>
+(function () {
+  var tiles  = Array.prototype.slice.call(document.querySelectorAll('.tile.filterable'));
+  var rows   = Array.prototype.slice.call(document.querySelectorAll('details.row'));
+  var groups = Array.prototype.slice.call(document.querySelectorAll('.wsgroup'));
+  var bar    = document.getElementById('filterbar');
+  var label  = document.getElementById('filterlabel');
+  var clear  = document.getElementById('clearfilter');
+  var active = null;
+
+  function apply() {
+    var shown = 0;
+    rows.forEach(function (r) {
+      var match = (!active || active === 'all' || r.getAttribute('data-status') === active);
+      r.hidden = !match;
+      if (match) shown++; else r.open = false;
+    });
+    groups.forEach(function (g) {
+      var any = Array.prototype.slice.call(g.querySelectorAll('details.row'))
+                     .some(function (r) { return !r.hidden; });
+      g.hidden = !any;
+    });
+    tiles.forEach(function (t) {
+      var on = (active === t.getAttribute('data-filter'));
+      t.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (active && active !== 'all') {
+      bar.hidden = false;
+      label.textContent = 'Showing ' + shown + ' \u00b7 ' + active;
+    } else {
+      bar.hidden = true;
+    }
+  }
+
+  tiles.forEach(function (t) {
+    t.addEventListener('click', function () {
+      var f = t.getAttribute('data-filter');
+      active = (active === f || f === 'all') ? null : f;
+      apply();
+    });
+  });
+  clear.addEventListener('click', function () { active = null; apply(); });
+})();
+</script>
