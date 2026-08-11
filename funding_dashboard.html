@@ -1,0 +1,1193 @@
+<title>SafeAI Health — Non-Dilutive Funding Dashboard</title>
+<style>
+  :root {
+    --bg:#f5f7f6; --surface:#ffffff; --surface-2:#eef2f0; --raise:#f9fbfa;
+    --ink:#15201e; --ink-soft:#41504c; --muted:#6c7a76; --faint:#93a09b;
+    --border:#dbe3df; --border-2:#c8d2cd;
+    --accent:#0f766e; --accent-ink:#0b5c55; --accent-tint:#e2f0ed;
+    --ok:#15803d; --ok-tint:#dcf3e3;
+    --research:#a15c07; --research-tint:#f7ecd6;
+    --noteligible:#5b6b74; --noteligible-tint:#e7ecee;
+    --dead:#b42318; --dead-tint:#f7e0dd;
+    --submitted:#1d4ed8; --submitted-tint:#dfe6fb; --won:#0f766e; --draft:#1d4ed8;
+    --urgent:#c2410c; --urgent-tint:#fbe4d5;
+    --shadow:0 1px 2px rgba(20,40,35,.04),0 4px 16px rgba(20,40,35,.05);
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  :root:not([data-theme="light"]) {}
+  @media (prefers-color-scheme:dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0d1413; --surface:#131d1b; --surface-2:#1a2523; --raise:#172220;
+      --ink:#e9efec; --ink-soft:#b3c0bb; --muted:#8b9994; --faint:#6d7c77;
+      --border:#25322f; --border-2:#31413d;
+      --accent:#2dd4bf; --accent-ink:#5ee0d0; --accent-tint:#123330;
+      --ok:#4ade80; --ok-tint:#123626;
+      --research:#e0a44a; --research-tint:#3a2c12;
+      --noteligible:#9fb0b0; --noteligible-tint:#222e2e;
+      --dead:#f4776a; --dead-tint:#3a1d1a;
+      --submitted:#8aa6ff; --submitted-tint:#1a2340; --won:#2dd4bf; --draft:#8aa6ff;
+      --urgent:#fb923c; --urgent-tint:#3a2413;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+      --bg:#0d1413; --surface:#131d1b; --surface-2:#1a2523; --raise:#172220;
+      --ink:#e9efec; --ink-soft:#b3c0bb; --muted:#8b9994; --faint:#6d7c77;
+      --border:#25322f; --border-2:#31413d;
+      --accent:#2dd4bf; --accent-ink:#5ee0d0; --accent-tint:#123330;
+      --ok:#4ade80; --ok-tint:#123626;
+      --research:#e0a44a; --research-tint:#3a2c12;
+      --noteligible:#9fb0b0; --noteligible-tint:#222e2e;
+      --dead:#f4776a; --dead-tint:#3a1d1a;
+      --submitted:#8aa6ff; --submitted-tint:#1a2340; --won:#2dd4bf; --draft:#8aa6ff;
+      --urgent:#fb923c; --urgent-tint:#3a2413;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;
+  }
+  .wrap { max-width:1080px; margin:0 auto; padding:clamp(20px,4vw,44px) clamp(16px,4vw,32px) 72px; }
+  a { color:var(--accent-ink); }
+  h1,h2,h3 { font-family:var(--serif); text-wrap:balance; letter-spacing:-.01em; }
+
+  header.top { border-bottom:1px solid var(--border); padding-bottom:22px; margin-bottom:26px; }
+  .eyebrow { font-family:var(--sans); text-transform:uppercase; letter-spacing:.14em;
+    font-size:.7rem; font-weight:700; color:var(--accent-ink); margin:0 0 8px; }
+  header.top h1 { margin:0; font-size:clamp(1.7rem,3.6vw,2.5rem); font-weight:600; }
+  header.top .lede { color:var(--ink-soft); margin:.5rem 0 0; max-width:64ch; }
+
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin:22px 0 0; }
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow); }
+  .tile.lead { background:var(--accent-tint); border-color:transparent; }
+  .tval { font-family:var(--serif); font-size:1.9rem; font-weight:600; line-height:1; }
+  .tlab { font-size:.78rem; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; flex:none; }
+  .dot.ok{background:var(--ok);} .dot.research{background:var(--research);}
+  .dot.noteligible{background:var(--noteligible);} .dot.dead{background:var(--dead);}
+
+  .banner { display:flex; gap:12px; align-items:flex-start; margin:24px 0 6px;
+    background:var(--surface-2); border:1px solid var(--border); border-left:3px solid var(--urgent);
+    border-radius:10px; padding:13px 16px; font-size:.86rem; color:var(--ink-soft); }
+  .banner b { color:var(--ink); }
+  .banner .bi { color:var(--urgent); font-weight:800; }
+
+  .section-label { font-family:var(--sans); text-transform:uppercase; letter-spacing:.13em;
+    font-size:.72rem; font-weight:700; color:var(--muted); margin:40px 0 14px; display:flex; align-items:center; gap:10px; }
+  .section-label::after { content:""; flex:1; height:1px; background:var(--border); }
+
+  ul.calendar { list-style:none; padding:0; margin:0; display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
+  .calcard { background:var(--surface); border:1px solid var(--border); border-radius:13px;
+    padding:15px 16px 16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:7px; }
+  .calcard.urgent { border-color:var(--urgent); background:linear-gradient(180deg,var(--urgent-tint),var(--surface) 60%); }
+  .calhead { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .calpri { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--accent-ink); background:var(--accent-tint); padding:3px 8px; border-radius:20px; }
+  .calcard.urgent .calpri { color:#fff; background:var(--urgent); }
+  .caldl { font-size:.8rem; font-weight:700; color:var(--ink); }
+  .calcard.urgent .caldl { color:var(--urgent); }
+  .calcard h3 { margin:2px 0 0; font-size:1.02rem; font-weight:600; line-height:1.25; }
+  .calfunder { margin:0; font-size:.8rem; color:var(--muted); display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .calaction { margin:2px 0 0; font-size:.82rem; color:var(--ink-soft); }
+  .calhrs { color:var(--faint); }
+
+  .fit { display:inline-flex; gap:2.5px; align-items:center; }
+  .fit i { width:7px; height:7px; border-radius:2px; background:var(--border-2); display:block; }
+  .fit i.on { background:var(--accent); }
+  .fit.na { color:var(--faint); }
+
+  .wsgroup { margin-top:14px; }
+  .wshead { margin:34px 0 12px; }
+  .wsnum { font-size:.7rem; text-transform:uppercase; letter-spacing:.13em; font-weight:700; color:var(--accent-ink); }
+  .wshead h2 { margin:3px 0 2px; font-size:1.4rem; font-weight:600; }
+  .wssub { margin:0; color:var(--muted); font-size:.85rem; }
+
+  .rows { display:flex; flex-direction:column; gap:7px; }
+  details.row { background:var(--surface); border:1px solid var(--border); border-radius:11px;
+    box-shadow:var(--shadow); overflow:hidden; }
+  details.row[open] { border-color:var(--border-2); }
+  .row summary { list-style:none; cursor:pointer; display:grid;
+    grid-template-columns:44px minmax(0,1fr) auto auto auto 18px; align-items:center; gap:14px;
+    padding:12px 15px; }
+  .row summary::-webkit-details-marker { display:none; }
+  .row summary:hover { background:var(--raise); }
+  .row:focus-within { outline:2px solid var(--accent); outline-offset:1px; }
+  .rmain { min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .rname { font-weight:600; font-size:.95rem; color:var(--ink); }
+  .rmeta { font-size:.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .amt { font-weight:600; font-size:.9rem; color:var(--ink); white-space:nowrap; }
+  .amt.none { color:var(--faint); font-weight:400; }
+  .rdl { font-size:.78rem; color:var(--ink-soft); white-space:nowrap; max-width:190px;
+    overflow:hidden; text-overflow:ellipsis; text-align:right; }
+  .rdl.urgent { color:var(--urgent); font-weight:700; }
+  .rdl.rolling { color:var(--accent-ink); }
+  .rdl.cold { color:var(--faint); }
+  .pill { font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; text-align:center; }
+  .pill.ok{color:var(--ok);background:var(--ok-tint);}
+  .pill.research{color:var(--research);background:var(--research-tint);}
+  .pill.noteligible{color:var(--noteligible);background:var(--noteligible-tint);}
+  .pill.dead{color:var(--dead);background:var(--dead-tint);}
+  .pill.submitted{color:var(--submitted);background:var(--submitted-tint);}
+  .pill.draft{color:var(--draft);background:var(--submitted-tint);}
+  .pill.won{color:#fff;background:var(--accent);}
+  .chev { color:var(--faint); transition:transform .18s ease; font-size:1.1rem; text-align:center; }
+  details.row[open] .chev { transform:rotate(90deg); }
+  .rbody { padding:2px 15px 15px 73px; border-top:1px solid var(--border); margin-top:2px;
+    display:flex; flex-direction:column; gap:8px; }
+  .raction { margin:10px 0 0; font-size:.88rem; color:var(--ink); }
+  .raction b, .metaitem b { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-right:6px; font-weight:700; }
+  .relig { margin:0; font-size:.83rem; color:var(--ink-soft); }
+  .rmetarow { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding-top:2px; }
+  .metaitem { font-size:.82rem; color:var(--ink-soft); }
+  .offlink { font-size:.82rem; font-weight:600; }
+
+  .s-dead summary .rname, .s-noteligible summary .rname { color:var(--ink-soft); }
+  .s-dead { opacity:.82; }
+
+  footer { margin-top:44px; padding-top:18px; border-top:1px solid var(--border);
+    color:var(--muted); font-size:.8rem; }
+  footer b { color:var(--ink-soft); }
+
+  @media (max-width:680px) {
+    .row summary { grid-template-columns:34px minmax(0,1fr) auto 16px; row-gap:8px; }
+    .rdl { grid-column:2/4; text-align:left; max-width:none; }
+    .pill { grid-column:1/3; justify-self:start; }
+    .amt { grid-column:3/4; }
+    .rbody { padding-left:15px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none!important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">SafeAI Health · Operating dashboard</p>
+    <h1>Non-Dilutive Funding Pipeline</h1>
+    <p class="lede">Grants, pre-seed investors, and philanthropic funders for a pre-incorporation,
+      pre-revenue clinical-AI governance &amp; post-deployment monitoring venture. A read-only view of
+      <b>Funding_Dashboard.xlsx</b> (the single source of truth), generated 2026-08-11.</p>
+    <div class="tiles">
+      <div class="tile lead">
+        <span class="tval">50</span>
+        <span class="tlab">Opportunities tracked</span>
+      </div>
+      
+      <div class="tile">
+        <span class="tval">17</span>
+        <span class="tlab"><i class="dot ok"></i>Eligible</span>
+      </div>
+      <div class="tile">
+        <span class="tval">26</span>
+        <span class="tlab"><i class="dot research"></i>Researching</span>
+      </div>
+      <div class="tile">
+        <span class="tval">5</span>
+        <span class="tlab"><i class="dot noteligible"></i>Not eligible</span>
+      </div>
+      <div class="tile">
+        <span class="tval">2</span>
+        <span class="tlab"><i class="dot dead"></i>Dead</span>
+      </div>
+      <div class="tile">
+        <span class="tval">3.52</span>
+        <span class="tlab">Average fit (of 5)</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner">
+    <span class="bi">!</span>
+    <span><b>Verification status.</b> This session's network policy blocked direct reads of official
+      program pages, so every amount, deadline, and rule is <b>search-verified against official-domain
+      content on 2026-08-11</b> — not a live-page confirmation. Each row links its official page; confirm
+      before acting, starting with the <b>21 Aug 2026</b> Coefficient Giving deadline.</span>
+  </div>
+
+  <p class="section-label">Application calendar — top 5 by deadline &amp; fit</p>
+  <ul class="calendar">
+      <li class="calcard urgent">
+        <div class="calhead">
+          <span class="calpri">1 - URGENT</span>
+          <span class="caldl">21 Aug 2026</span>
+        </div>
+        <h3>GH&amp;W in an Era of Transformative AI (RFP)</h3>
+        <p class="calfunder">Open Philanthropy / Coefficient Giving · <span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> · <span class="calhrs">~15-30h</span></p>
+        <p class="calaction">Confirm the 21 Aug deadline on the official page TODAY and decide go/no-go with Lara. Strongest thematic fit; up to $10M; LMIC-engaged proposals encouraged.</p>
+      </li>
+      <li class="calcard ">
+        <div class="calhead">
+          <span class="calpri">2</span>
+          <span class="caldl">31 Oct 2026</span>
+        </div>
+        <h3>Rainer Arnhold Fellowship (~$100k)</h3>
+        <p class="calfunder">Mulago Foundation · <span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> · <span class="calhrs">~8-15h</span></p>
+        <p class="calaction">Confirm the deadline &amp; current cycle on the official portal, then prepare the application. Fiscal sponsorship / in-registration entities explicitly eligible - fits SafeAI&#x27;s pre-incorporation status.</p>
+      </li>
+      <li class="calcard ">
+        <div class="calhead">
+          <span class="calpri">3</span>
+          <span class="caldl">Rolling (start now)</span>
+        </div>
+        <h3>Early social-enterprise funding (~$300k/3yr)</h3>
+        <p class="calfunder">Draper Richards Kaplan (DRK) · <span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> · <span class="calhrs">~1-3h</span></p>
+        <p class="calaction">Submit the rolling online application (~1-3h). Accepts for-profits AND fiscal sponsorship - best structural fit. Line up a fiscal sponsor (e.g. Multiplier / TSNE) to strengthen it.</p>
+      </li>
+      <li class="calcard ">
+        <div class="calhead">
+          <span class="calpri">4</span>
+          <span class="caldl">Rolling (start now)</span>
+        </div>
+        <h3>Pre-seed investment (up to ~$500k)</h3>
+        <p class="calfunder">Precursor Ventures · <span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> · <span class="calhrs">~3-6h</span></p>
+        <p class="calaction">Submit the cold application at precursorvc.com/startup. Explicit pre-seed + digital-health thesis; lead with Harvard DrPH founder-market fit. (Dilutive - keep out of grant reporting.)</p>
+      </li>
+      <li class="calcard ">
+        <div class="calhead">
+          <span class="calpri">5</span>
+          <span class="caldl">~Oct 2026 (watch)</span>
+        </div>
+        <h3>Nucleate Activator - Boston (equity-free)</h3>
+        <p class="calfunder">Nucleate · <span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span> · <span class="calhrs">~5-12h</span></p>
+        <p class="calaction">Confirm the Boston 2026-27 application window and software-venture eligibility. Explicitly welcomes pre-incorporation academic teams; equity-free.</p>
+      </li>
+  </ul>
+
+  <p class="section-label">Full pipeline</p>
+  
+    <section class="wsgroup">
+      <div class="wshead">
+        <span class="wsnum">Workstream 1</span>
+        <h2>US ecosystem grants &amp; accelerators</h2>
+        <p class="wssub">Equity-free where possible · Harvard, Boston, MA state, MIT, SBDC, NIH · <b>13</b> opportunities</p>
+      </div>
+      <div class="rows">
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">i-Lab Venture Program / Grants</span>
+              <span class="rmeta">Harvard Innovation Labs · US - Massachusetts</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling (termly intake)</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Apply to Student i-Lab Venture Incubation Program for the current term; confirm term deadline on official page.</p>
+            <p class="relig">Matriculated Harvard student / affiliate = eligible; no incorporation required to join. Equity-free (incubation + Spark/SIFF grants); Allston Venture Fund is dilutive (SAFE) — keep out of this workstream.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/resources/funding-opportunities" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Massachusetts SBDC SBIR Advising</span>
+              <span class="rmeta">Massachusetts SBDC · US - Massachusetts</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> AWAITING LARA&#x27;S GO-AHEAD to submit the free Request for Advising at msbdc.org/sbir (do not submit without explicit approval).</p>
+            <p class="relig">Free, confidential advising for prospective + existing MA small businesses. NO incorporation required to request (serves &#x27;prospective&#x27; businesses). F-1 not a bar (advising is not a federal award).</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 0.5-1 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.msbdc.org/sbir/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Navab Social Impact Fellowship Fund</span>
+              <span class="rmeta">Harvard Innovation Labs · US - Massachusetts</span>
+            </span>
+            <span class="amt">$15,000</span>
+            <span class="rdl cold">No open call (watch Fall 2026 pitch day)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch for the Fall 2026 SIFF pitch-day call; confirm deadline and grant cap with i-Lab staff.</p>
+            <p class="relig">Active founder must be a matriculated Harvard student/postdoc/clinical fellow = eligible. Equity-free. Public-health/social-impact sector = strong fit. Reportedly one pitch per venture — time it well. No incorporation required.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/funding-opportunities/social-impact" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Harvard HealthLab Accelerator (next cohort)</span>
+              <span class="rmeta">Harvard HealthLab · US - Massachusetts</span>
+            </span>
+            <span class="amt">$1,000</span>
+            <span class="rdl cold">No open call (watch Fall 2026 cohort)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm Fall 2026 cohort deadline and alumni re-entry rules directly with HealthLab/LPCE staff.</p>
+            <p class="relig">Enrolled Harvard student team lead = eligible; public/planetary-health focus = home program (SafeAI is HealthLab-incubated). Equity-free. No incorporation required. Confirm alumni re-entry rules.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.healthlabaccelerator.harvard.edu/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">President&#x27;s Innovation Challenge</span>
+              <span class="rmeta">Harvard Innovation Labs · US - Massachusetts</span>
+            </span>
+            <span class="amt">$75,000</span>
+            <span class="rdl cold">No open call (watch ~fall 2026 for 2027 cycle)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch for 2027 PIC launch (~fall 2026); confirm open date and prize amounts on official page.</p>
+            <p class="relig">Harvard students (all schools) + select alumni/affiliates; founder is a matriculated DrPH student = eligible. Equity-free competition. No US-entity or specific visa required to apply (F-1 prize/tax implications to check separately).</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 12-20 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://innovationlabs.harvard.edu/presidents-innovation-challenge" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Nucleate Activator</span>
+              <span class="rmeta">Nucleate · US / Global chapters</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">No open call (watch Boston 2026-27, ~Oct)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm the Boston 2026-27 Activator application window and software-venture eligibility on the official page.</p>
+            <p class="relig">Built for pre-company academic founders (students/PhDs/postdocs/PIs) = DrPH founder fits directly. No incorporation required; equity-free. Bio/life-science-leaning — confirm a clinical-AI/software venture is in scope for the Boston chapter.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 5-12 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://nucleate.org/activator/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">MassChallenge HealthTech</span>
+              <span class="rmeta">MassChallenge · US - Massachusetts</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">No open call (2026 Healthcare Challenge closed; next cohort TBD)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm next HealthTech cohort dates and whether to target the Early-Stage (pre-revenue) track on the official page.</p>
+            <p class="relig">Equity-free; incorporation NOT required to apply (historically required to RECEIVE cash awards in some geos — verify). No founder-visa bar. Current Healthcare track skews to validated/scaling products; Early-Stage track fits pre-revenue better.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://masschallenge.org/programs-healthtech/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">MIT Solve (relevant Global Challenge)</span>
+              <span class="rmeta">MIT Solve · Global</span>
+            </span>
+            <span class="amt">$100,000</span>
+            <span class="rdl cold">No open call (2026 flagship closed 21 May 2026)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm next Global Challenge open date and check for any currently-open health/AI challenge on the official page.</p>
+            <p class="relig">Open globally to for-profit and nonprofit; no incorporation strictly required. For-profit entrants &#x27;preferred to have secured seed funding or beyond&#x27; — disadvantages pre-revenue. No visa bar.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 10-25 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://solve.mit.edu/challenges" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">NIH SBIR/STTR (flagged constraint)</span>
+              <span class="rmeta">NIH · US</span>
+            </span>
+            <span class="amt">$323,090</span>
+            <span class="rdl dated">Standard NIH cycles: Jan 5 / Apr 5 / Sep 5</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Flag the &gt;50% US-citizen/PR ownership rule for immigration counsel; do not self-assess. Blocked pending incorporation + counsel.</p>
+            <p class="relig">Requires a US for-profit small business concern (incorporation needed) AND &gt;50% direct ownership/control by US citizens or permanent residents. Founder is on F-1 = NOT a citizen/PR. Nominee arrangement implicates this exact rule. NEEDS IMMIGRATION COUNSEL INPUT — do not self-assess. Registrations: SAM.gov/UEI, SBA Company Registry, eRA Commons, Grants.gov.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 80-160 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://seed.nih.gov/small-business-funding/small-business-program-basics/eligibility-criteria" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">HealthLab Follow-on Funding</span>
+              <span class="rmeta">Harvard HealthLab · US - Massachusetts</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">Unknown (no open call identified)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Email HealthLab/LPCE staff to confirm whether a current follow-on fund exists (amount, terms, eligibility).</p>
+            <p class="relig">No distinct published follow-on fund found; any follow-on likely flows through HealthLab cohort participation / Venture Board. Unverified — confirm with staff.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.healthlabaccelerator.harvard.edu/venture-board" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-noteligible">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">MLSC Impact / Catalyst programs</span>
+              <span class="rmeta">Massachusetts Life Sciences Center · US - Massachusetts</span>
+            </span>
+            <span class="amt">$250,000</span>
+            <span class="rdl dated">Closed 12 Jun 2026 (watch next cycle)</span>
+            <span class="pill noteligible">Not eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Park until MA-incorporated with committed seed investors; confirm program scope covers clinical-AI software.</p>
+            <p class="relig">Requires a Massachusetts life-sciences company AND committed private investors in a first institutional seed round. SafeAI is pre-incorporation and pre-financing = cannot meet now. Also confirm clinical-AI software counts as &#x27;life sciences&#x27;.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 15-30 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.masslifesciences.com/programs/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-noteligible">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">MassNextGen</span>
+              <span class="rmeta">Massachusetts Life Sciences Center · US - Massachusetts</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl dated">Closed 12 Jun 2026 (watch next cycle)</span>
+            <span class="pill noteligible">Not eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm women-led eligibility and life-sciences scope; watch for the next cycle.</p>
+            <p class="relig">Woman/underrepresented-led early-stage MA life-sciences company. Confirm founder meets the women-in-C-suite criterion and whether clinical-AI software qualifies as life sciences. Likely expects an existing MA entity.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 10-20 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.masslifesciences.com/programs/massnextgen/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-noteligible">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 1 of 5" aria-label="Fit 1 of 5"><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">MassVentures START (later, post-SBIR)</span>
+              <span class="rmeta">MassVentures · US - Massachusetts</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl dated">Periodic rounds (post-incorporation)</span>
+            <span class="pill noteligible">Not eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Park until MA-incorporated and holding a federal SBIR/STTR award.</p>
+            <p class="relig">Requires an MA company doing R&amp;D primarily in MA AND an existing federal SBIR/STTR award. SafeAI has neither = not eligible now. Confirmed later-stage, post-incorporation, post-SBIR follow-on.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.mass-ventures.com/start-program-info" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details></div>
+    </section>
+    <section class="wsgroup">
+      <div class="wshead">
+        <span class="wsnum">Workstream 2</span>
+        <h2>Angel investors &amp; pre-seed funds</h2>
+        <p class="wssub">Dilutive by nature · pre-revenue / pre-seed check writers with health or AI theses · <b>26</b> opportunities</p>
+      </div>
+      <div class="rows">
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Pillar VC</span>
+              <span class="rmeta">Pillar VC · US - Boston</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Secure a warm intro via Harvard i-Lab/HealthLab or CHAI, then pitch (pre-seed/inception; healthcare+AI thesis).</p>
+            <p class="relig">Pre-seed/inception fund; invests pre-revenue at idea stage incl. academic spinouts. Healthcare + AI named sectors. Boston. Warm intro strongly preferred (&#x27;referrals are critical&#x27;).</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.pillar.vc/connect/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Precursor Ventures</span>
+              <span class="rmeta">Precursor Ventures · US - SF (invests broadly)</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the cold application at precursorvc.com/startup (lead with Harvard DrPH founder-market fit).</p>
+            <p class="relig">Explicit pre-seed specialist (&#x27;people over products&#x27;); funds pre-revenue on founder/market strength. Digital Health is a named category. Open cold-application form; fast decisions. National.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://precursorvc.com/startup/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Nina Capital</span>
+              <span class="rmeta">Nina Capital · Europe / North America - Barcelona</span>
+            </span>
+            <span class="amt">€1,500,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the pitch deck to dealflow@nina.capital (healthcare-only pre-seed; strongest thematic fit of the new batch).</p>
+            <p class="relig">Healthcare-only fund with explicit pre-seed appetite; invests in North America. &#x27;Need-driven&#x27; healthtech + AI/ML thesis = strongest thematic match. No drugs/vaccines. Open cold route.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.nina.capital/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">2048 Ventures</span>
+              <span class="rmeta">2048 Ventures · US - Boston / NYC</span>
+            </span>
+            <span class="amt">$750,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Apply via the Pre-Seed Fast Track form at 2048.vc (Boston-based; cold route; ~10-business-day decision).</p>
+            <p class="relig">Pre-seed / first-round fund based in Boston + NYC. Health + Vertical-AI thesis. Pre-Seed Fast Track is cold (no warm intro), decision in ~10 business days. Eligible if not already raised &gt;$2M (SafeAI qualifies). Pre-incorporation acceptable.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.2048.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Afore Capital</span>
+              <span class="rmeta">Afore Capital · US - SF</span>
+            </span>
+            <span class="amt">$2M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the cold pitch form at afore.vc/pitch; lead with the Harvard DrPH founder story.</p>
+            <p class="relig">Dedicated pre-seed / pre-formation fund (backs founders before traction; pre-incorporation acceptable). Health + AI in scope; founder-conviction weighted over market analysis. Open cold pitch form; fast decisions.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.afore.vc/pitch" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">January Ventures</span>
+              <span class="rmeta">January Ventures · US / Europe - Boston</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Complete the ~2-minute cold form at january.ventures (Boston; no deck required; pre-product mandate fits SafeAI).</p>
+            <p class="relig">Pre-seed fund that explicitly invests BEFORE product/customers/revenue - ideal for a pre-incorporation company. Boston + London. B2B incl. digital health; female / underdog-founder thesis. Cold ~2-minute form, no deck or warm intro needed (lowest-friction route of the batch).</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 1-2 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.january.ventures/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Launchpad Venture Group</span>
+              <span class="rmeta">Launchpad Venture Group · US - Boston</span>
+            </span>
+            <span class="amt">$1,250,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Register as an applicant at members.launchpadventuregroup.com and submit the deck.</p>
+            <p class="relig">Explicitly backs very-early pre-revenue founders (&#x27;even just a couple founders with a great idea&#x27;). New England HQ required (Boston OK). Tech-driven incl. life sciences. Cold application via members portal.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://members.launchpadventuregroup.com/apply" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Hustle Fund</span>
+              <span class="rmeta">Hustle Fund · US (invests broadly)</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the &#x27;Pitch us&#x27; cold form at hustlefund.vc (lead with team velocity + a crisp wedge).</p>
+            <p class="relig">Explicit pre-seed fund; backs very early / pre-revenue on speed &amp; execution. Digital health among named sectors. Cold &#x27;Pitch us&#x27; form; warm intro helpful not required; welcomes founders outside hubs.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.hustlefund.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Jumpstart Foundry</span>
+              <span class="rmeta">Jumpstart Foundry · US - Nashville</span>
+            </span>
+            <span class="amt">$150,000</span>
+            <span class="rdl rolling">Rolling (quarterly decisions)</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the cold application at jsf.co/apply (healthcare pre-seed; note the standard $150k term).</p>
+            <p class="relig">Healthcare-only pre-seed fund; purpose-built for pre-revenue health founders. National (Nashville). Cold application; quarterly decisions. Standard $150k term = weigh dilution vs. large payer/provider network value.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://jsf.co/apply" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Air Street Capital</span>
+              <span class="rmeta">Air Street Capital · US / Europe - London</span>
+            </span>
+            <span class="amt">$5M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Email Nathan Benaich (nathan@airstreet.com) with the core AI capability + stage; a CHAI / academic-AI intro warms it.</p>
+            <p class="relig">AI-first fund incl. TechBio / AI-native life sciences; made a 2025 healthcare deal. Explicit pre-seed/seed ($500K-$5M). Solo-GP, thesis-driven - AI-capability narrative matters more than traction. Direct cold-email route.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.airstreet.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Y Combinator</span>
+              <span class="rmeta">Y Combinator · Global - SF batch</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl dated">Batch-based (next window; Fall 2026 closed 27 Jul 2026)</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Target the next batch (Fall 2026 deadline passed); complete the cold application at ycombinator.com/apply. Weigh SF relocation + ~10% dilution.</p>
+            <p class="relig">Pre-seed accelerator; accepts pre-revenue/idea-stage and pre-incorporation founders. Standard DILUTIVE deal: $125K for 7% + $375K uncapped SAFE (~$500K, ~9-10% total). Deep clinical-AI portfolio. In-person SF batch = relocation. Founder must hold &gt;=10% equity. Batch deadlines.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.ycombinator.com/apply" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Village Global</span>
+              <span class="rmeta">Village Global · US</span>
+            </span>
+            <span class="amt">$3M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Seek an intro via a Village Global Network Leader / portfolio founder; otherwise apply through the Velocity form.</p>
+            <p class="relig">Network-driven pre-seed/seed ($500K-$3M); the Velocity pre-seed program invests up to $1M with &#x27;particular depth in healthcare.&#x27; Referral-preferred but a form + hello@villageglobal.vc exist. Pre-incorporation OK.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.villageglobal.com/velocity" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Mass Medical Angels</span>
+              <span class="rmeta">Mass Medical Angels · US - Boston</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm software/health-IT appetite, then submit the cold application at massmedangels.com (or via a member intro).</p>
+            <p class="relig">Healthcare/life-science angel group; early-stage. Center of gravity is devices/therapeutics — confirm software/health-IT appetite. Cold application accepted; member warm intro helps.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.massmedangels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">AlleyCorp</span>
+              <span class="rmeta">AlleyCorp · US - NYC</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Secure a warm intro to an AlleyCorp healthcare partner via CHAI / Mayo Clinic / Harvard network.</p>
+            <p class="relig">Genuine pre-seed + a physician-led Healthcare vertical (well-equipped to assess clinical AI governance). NYC, invests nationally. No public cold form — warm intro to a healthcare partner effectively required.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://alleycorp.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Underscore VC</span>
+              <span class="rmeta">Underscore VC · US - Boston</span>
+            </span>
+            <span class="amt">$1M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm the product reads as software governance (not an FDA device); seek a Core Partner warm intro.</p>
+            <p class="relig">Pre-seed/seed Boston fund for B2B/vertical SaaS + AI/ML; AVOIDS biotech and anything requiring FDA drug/device approval. SafeAI&#x27;s software governance layer likely clears this — confirm it is not framed as an FDA-regulated device. Thesis-selective, warm-intro-led.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://underscore.vc/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Zetta Venture Partners</span>
+              <span class="rmeta">Zetta Venture Partners · US / Europe - SF</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm the submission channel on zettavp.com and frame the product as core-ML; warm intro via CHAI / health-AI operators.</p>
+            <p class="relig">AI-native B2B only (AI/ML must be the core product, not a feature); pre-seed named but sweet spot is seed. HealthTech in scope. Must be framed as core-ML (drift/performance monitoring), not a compliance wrapper. Cold route unconfirmed - likely warm intro.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.zettavp.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">AIX Ventures</span>
+              <span class="rmeta">AIX Ventures · US - SF</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Secure an academic-AI / CHAI warm intro; lead with proprietary-ML defensibility (not compliance tooling).</p>
+            <p class="relig">AI-native only (AI must be the core competitive advantage); healthcare interest stated. Practitioner GPs scrutinise the technical AI core - must show proprietary ML (drift/performance monitoring), not process tooling. Warm intro strongly favoured.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.aixventures.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Beacon Angels</span>
+              <span class="rmeta">Beacon Angels · US - Boston</span>
+            </span>
+            <span class="amt">$400,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Apply once a working MVP/pilot exists (Beacon requires a functional MVP or early validation).</p>
+            <p class="relig">Early stage but requires a functional MVP or early customer validation (pure pre-product is out). New England companies only (Boston OK). Sector-generalist. Cold application via portal.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 4-8 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://beaconangels.com/candidates/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Hub Angels</span>
+              <span class="rmeta">Hub Angels · US - Boston</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Email info@hubangels.com to confirm earliest-stage appetite before investing effort in a pitch.</p>
+            <p class="relig">Confirmed active (Fund VII, a 2026 deal). Early-stage, sector-generalist (life sciences + software history). No explicit pre-seed statement — confirm earliest-stage appetite. Intro/screen via info@hubangels.com.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.hubangels.com/faq.html" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">TBD Angels</span>
+              <span class="rmeta">TBD Angels · US - Boston</span>
+            </span>
+            <span class="amt">$250,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm pre-revenue appetite; submit a deck via TBD Angels/OpenVC and seek a member warm intro.</p>
+            <p class="relig">Boston operator-angel group writing earliest/angel-stage checks (pre-revenue not disqualifying). Sector-agnostic; no dedicated health-AI thesis. Cold deck submission accepted; member intro highest-yield.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://tbdangels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Susa Ventures</span>
+              <span class="rmeta">Susa Ventures · US - SF</span>
+            </span>
+            <span class="amt">$2M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm they&#x27;ll write a first pre-incorporation check; route a warm intro via CHAI / HealthLab or a digital-health portfolio founder.</p>
+            <p class="relig">Pre-seed stated but seed-weighted (leads seed rounds). AI + healthcare + digital health named sectors. May expect more formation/traction than a pure pre-seed fund. Warm intro preferred; cold mechanism unconfirmed.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-5 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.susaventures.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Broadway Angels</span>
+              <span class="rmeta">Broadway Angels · US - SF</span>
+            </span>
+            <span class="amt">$50,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Map the shortest warm-intro path (Signal/nfx) via CHAI / i-Lab mentors; no cold route exists.</p>
+            <p class="relig">All-female group of VC GPs &amp; senior tech execs; pre-seed/seed, digital health + IT, receptive to women founders. Small checks (~$5K-$50K) but high-signal network / follow-on value. No public form - warm intro required.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.broadway-angels.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Basis Set Ventures</span>
+              <span class="rmeta">Basis Set Ventures · US - SF</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Low priority; only pursue if framing SafeAI as enterprise-AI automation. Cold note via basisset.com.</p>
+            <p class="relig">AI/ML for productivity &amp; infrastructure; healthcare is NOT a stated thesis. Pre-seed done selectively/secondarily. Marginal fit - only if framed as enterprise-AI automation for health systems. Low priority.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 2-4 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.basisset.com/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-noteligible">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Golden Seeds</span>
+              <span class="rmeta">Golden Seeds · US - National</span>
+            </span>
+            <span class="amt">$2M</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill noteligible">Not eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Revisit at POC/late-seed stage; confirm women-in-C-suite eligibility; attend a Boston info session to build the relationship.</p>
+            <p class="relig">Women-led required (&gt;=1 woman in an operating C-suite role) — confirm SafeAI qualifies. Stage: late seed / early Series A; explicitly avoids friends-and-family stage and wants proof of concept = too late for pre-revenue now. $50 application fee.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 3-6 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.goldenseeds.com/how-to-apply" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-dead">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">.406 Ventures</span>
+              <span class="rmeta">406 Ventures · US - Boston</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill dead">Dead</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Revisit at institutional seed once there&#x27;s a product + traction; build a partner relationship now.</p>
+            <p class="relig">Earliest stage is a large first-institutional SEED round + Series A; no pre-seed evidence. Excellent thesis (healthcare + data/AI) — revisit at institutional seed. Disqualified per pre-seed rule for now.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.406ventures.com/our-focus/healthcare/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-dead">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 1 of 5" aria-label="Fit 1 of 5"><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">E14 Fund</span>
+              <span class="rmeta">E14 Fund · US - Cambridge</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill dead">Dead</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Not eligible without an MIT-affiliated co-founder; no action (revisit only if an MIT co-founder joins).</p>
+            <p class="relig">Invests ONLY in startups with an MIT-affiliated key founder/contributor. A Harvard DrPH founder without an MIT co-founder does not meet the mandate = disqualified.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.e14.vc/apply" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details></div>
+    </section>
+    <section class="wsgroup">
+      <div class="wshead">
+        <span class="wsnum">Workstream 3</span>
+        <h2>Philanthropic funders · Penda / WHO angle</h2>
+        <p class="wssub">Post-deployment monitoring of clinical AI in LMIC settings · safety &amp; equity framing · <b>11</b> opportunities</p>
+      </div>
+      <div class="rows">
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Draper Richards Kaplan Foundation</span>
+              <span class="rmeta">DRK Foundation · Global</span>
+            </span>
+            <span class="amt">$300,000</span>
+            <span class="rdl rolling">Rolling</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Submit the rolling online application at drkfoundation.org/apply; line up a fiscal sponsor (e.g. Multiplier / TSNE) to strengthen it.</p>
+            <p class="relig">For-profits: yes (mission-driven C/B-corp). Nonprofits: yes. Individuals: no. Academic: no. Fiscal sponsorship: ACCEPTED (fiscally sponsored projects explicitly eligible). US entity: not required. Best structural fit for an unincorporated social enterprise — line up a fiscal sponsor to strengthen it. Candidate sponsors: Multiplier / TSNE (Boston) — verify.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 1-3 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.drkfoundation.org/apply/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Mulago Foundation</span>
+              <span class="rmeta">Mulago Foundation · Global (LMIC focus)</span>
+            </span>
+            <span class="amt">$100,000</span>
+            <span class="rdl dated">31 Oct 2026 (Rainer Arnhold Fellowship) - confirm</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Confirm the Rainer Arnhold Fellowship deadline (reported 31 Oct 2026) and current-cycle status on the official portal, then prep the application (fiscal sponsorship accepted).</p>
+            <p class="relig">For-profits: yes (mission-driven). Nonprofits: yes. Individuals: no (must lead an entity). Academic: no. Fiscal sponsorship: ACCEPTED (fiscally sponsored / in-registration entities explicitly eligible). US entity: not required (worldwide). Strong LMIC/Penda-Kenya fit; the fellowship is the open door (core grantmaking is invitation-only).</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.mulagofoundation.org/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-ok">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 5 of 5" aria-label="Fit 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Open Philanthropy (Global Health R&amp;D)</span>
+              <span class="rmeta">Open Philanthropy (now Coefficient Giving) · Global</span>
+            </span>
+            <span class="amt">$10M</span>
+            <span class="rdl urgent">21 Aug 2026 (RFP) - confirm URGENTLY</span>
+            <span class="pill ok">Eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> URGENT: confirm the 21 Aug 2026 RFP deadline on the official page and decide go/no-go with Lara (10 days out).</p>
+            <p class="relig">For-profits: yes. Nonprofits: yes. Individuals: yes. Academic: yes. Fiscal sponsorship: unclear (confirm). US entity: not required (worldwide; LMIC-engaged proposals encouraged). Strongest fit: RFP explicitly covers how global health should respond to transformative AI. Funder renamed Open Philanthropy -&gt; Coefficient Giving.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 15-30 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://coefficientgiving.org/funds/global-health-wellbeing-opportunities/request-for-proposals-global-health-and-wellbeing-in-an-era-of-transformative-ai/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 4 of 5" aria-label="Fit 4 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Gates Grand Challenges (current open calls)</span>
+              <span class="rmeta">Gates Foundation · Global</span>
+            </span>
+            <span class="amt">$500,000</span>
+            <span class="rdl dated">Family-planning call 25 Aug 2026 (not eligible); EVAH round closed Apr 2026</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch for the next EVAH round (the on-point vehicle via J-PAL/APHRC); the current family-planning call is not a fit.</p>
+            <p class="relig">For-profits: yes. Nonprofits: yes. Individuals: no. Academic: yes. Fiscal sponsorship: unclear. US entity: not required. NOTE: the one open call (AI-enabled family planning, sub-Saharan Africa, needs in-country user base) does not fit and SafeAI cannot meet it.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 25-50 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://gcgh.grandchallenges.org/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Wellcome Trust (current open calls)</span>
+              <span class="rmeta">Wellcome · Global</span>
+            </span>
+            <span class="amt">£3,500,000</span>
+            <span class="rdl cold">No open call (Discovery Awards reopen 23 Sep 2026)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Pursue via a Kenyan/academic not-for-profit lead (SafeAI as collaborator); the post-Oct-2026 Africa/Asia lead rule favors a Penda-led application.</p>
+            <p class="relig">For-profits: no (administering org must be not-for-profit). Nonprofits: yes. Individuals: no (needs an eligible administering organisation). Academic: yes. Fiscal sponsorship: n/a. US entity: not required; from 29 Oct 2026 leads must be UK or Africa/South/SE-Asia LMICs. Route = Penda-Kenya or academic lead, SafeAI as collaborator.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 40-80 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://wellcome.org/research-funding/schemes/wellcome-discovery-awards" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Patrick J. McGovern Foundation</span>
+              <span class="rmeta">Patrick J. McGovern Foundation · US / Global</span>
+            </span>
+            <span class="amt">$125,000</span>
+            <span class="rdl cold">No open call (accelerator closed 1 Jul 2026)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> No unsolicited route; build visibility and watch for the next accelerator cohort (would need nonprofit/fiscal-sponsor framing).</p>
+            <p class="relig">For-profits: no (focus is nonprofits/NGOs; some social enterprises via accelerators). Nonprofits: yes. Individuals: no. Academic: yes. Fiscal sponsorship: unclear. US entity: not explicitly required but US-centric. No unsolicited route; accelerator (nonprofit-focused) closed 1 Jul 2026.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 8-15 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.mcgovern.org/grants/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Grand Challenges Canada</span>
+              <span class="rmeta">Grand Challenges Canada · Global (LMIC focus)</span>
+            </span>
+            <span class="amt">C$200,000</span>
+            <span class="rdl cold">No open call (watch next global-health call)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch for the next global-health innovation call; plan to apply via an incorporated Penda/Kenya partner and confirm Kenya is on the country list.</p>
+            <p class="relig">For-profits: yes. Nonprofits: yes. Individuals: no. Academic: yes. Fiscal sponsorship: unclear/likely not — applicant must be legally incorporated and able to administer funds. US entity: not required but project must run in an eligible LMIC on the call&#x27;s country list (confirm Kenya). Two blockers now: no open call + incorporation required.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.grandchallenges.ca/apply-for-funding/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">The Rockefeller Foundation</span>
+              <span class="rmeta">Rockefeller Foundation · Global</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">No open call (invitation-only)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch-only; build Program Officer relationships via the global-health/health-AI network (no application route).</p>
+            <p class="relig">For-profits: unclear (invitation-only). Nonprofits: yes (by invitation). Individuals: no. Academic: yes (by invitation). Fiscal sponsorship: unclear. US entity: not required. No cold application mechanism — funding via Program Officer invitation only.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.rockefellerfoundation.org/grants/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 3 of 5" aria-label="Fit 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Wellcome Leap</span>
+              <span class="rmeta">Wellcome Leap · Global</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">No open call (watch program RFPs)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Watch for a clinical-AI / health-delivery program RFP; participation needs an incorporated contracting entity.</p>
+            <p class="relig">For-profits: yes. Nonprofits: yes. Individuals: no (contract as an organisation). Academic: yes. Fiscal sponsorship: unclear/likely not — milestone contracts require a contracting legal entity. US entity: not required. Needs an incorporated entity able to sign milestone contracts.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://wellcomeleap.org/programs/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-research">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Fondation Botnar</span>
+              <span class="rmeta">Fondation Botnar · Global (LMIC focus)</span>
+            </span>
+            <span class="amt none">—</span>
+            <span class="rdl cold">No open call (watch newsletter)</span>
+            <span class="pill research">Researching</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Subscribe to the newsletter and watch for the next digital-health LMIC call (none open now).</p>
+            <p class="relig">For-profits: unclear (varies by call). Nonprofits: yes. Individuals: no. Academic: yes. Fiscal sponsorship: unclear. US entity: not required (LMIC-based initiatives). Core lens is youth/adolescent wellbeing + digital health in specific LMIC cities; Kenya not a recent target — partial fit only.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Est. effort</b> 20-40 h</span><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://www.fondationbotnar.org/funding-opportunities/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details>
+        <details class="row s-noteligible">
+          <summary>
+            <span class="rfit"><span class="fit" title="Fit 2 of 5" aria-label="Fit 2 of 5"><i class="on"></i><i class="on"></i><i class="off"></i><i class="off"></i><i class="off"></i></span></span>
+            <span class="rmain">
+              <span class="rname">Skoll Foundation</span>
+              <span class="rmeta">Skoll Foundation · Global</span>
+            </span>
+            <span class="amt">$2M</span>
+            <span class="rdl cold">No open call (nomination-only)</span>
+            <span class="pill noteligible">Not eligible</span>
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="rbody">
+            <p class="raction"><b>Next action</b> Revisit post-incorporation with proven scale (nomination-only); no current action.</p>
+            <p class="relig">For-profits: yes. Nonprofits: yes. Individuals: no. Academic: no. Fiscal sponsorship: NOT accepted (requires a legally incorporated entity). US entity: not required. Nomination/invitation-only; targets proven, later-stage orgs with demonstrated scale = opposite of a pre-incorporation startup.</p>
+            <div class="rmetarow"><span class="metaitem"><b>Owner</b> Lara</span><a class="offlink" href="https://skoll.org/about/skoll-awards/" target="_blank" rel="noopener">Official page ↗</a></div>
+          </div>
+        </details></div>
+    </section>
+
+  <footer>
+    <p>Status legend: <b>Eligible</b> = eligible &amp; actionable now · <b>Researching</b> = eligible but
+    watching for an open call or confirming fit · <b>Not eligible</b> = structural mismatch at current
+    stage · <b>Dead</b> = disqualified. Owner: Lara. Fit score 1–5. Investors (Workstream 2) are
+    dilutive and tagged Type = Investor so they never mix into grant reporting.</p>
+    <p>Generated from Funding_Dashboard.xlsx · 2026-08-11. Update the workbook, not this page.</p>
+  </footer>
+</div>
