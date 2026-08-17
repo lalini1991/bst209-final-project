@@ -122,6 +122,12 @@
   .note b { color: var(--accent-ink); }
   .note svg { flex: none; margin-top: 2px; }
 
+  /* ---------- Area tabs ---------- */
+  .tabs { display: flex; gap: 7px; margin: 20px 0 0; flex-wrap: wrap; }
+  .tab { appearance: none; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); padding: 8px 15px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: .82rem; transition: border-color .15s, background .15s, color .15s; }
+  .tab:hover { border-color: var(--accent); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
   /* ---------- Controls bar ---------- */
   .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 16px; }
   .controls .field { display: inline-flex; align-items: center; gap: 7px; }
@@ -248,6 +254,12 @@
       <span class="hint">Replace [your number] before sending.</span>
     </div>
   </section>
+
+  <div class="tabs" id="tabs" role="tablist" aria-label="Area">
+    <button class="tab active" data-city="" role="tab">All areas</button>
+    <button class="tab" data-city="Cambridge" role="tab">Cambridge</button>
+    <button class="tab" data-city="Somerville" role="tab">Somerville daycare</button>
+  </div>
 
   <div class="controls">
     <div class="field">
@@ -444,6 +456,27 @@
       web:"", age:"Home care", seedNotes:"Licensed home daycare. Bilingual program.",
       status:"tour", price:"$600/wk", avail:"1 opening — visit Mon 17th 5pm", last:"2026-08-10",
       notes:"One opening from Sept. $600/week incl. breakfast, lunch & snack. Hours 8am–5pm. Bilingual. Visit booked Monday the 17th at 5pm." },
+    { id:"sv-tejada", name:"Sarah Tejada Family Child Care", type:"Family", city:"Somerville",
+      address:"Arlington St, Somerville, MA 02145", phone:"(617) 961-2580",
+      web:"", age:"Home care (max 8)", seedNotes:"East Somerville (02145) — close to Glen St. Licensed family childcare." },
+    { id:"sv-miles", name:"Miles of Smiles Child Care", type:"Family", city:"Somerville",
+      address:"11 Flint Ave, Apt 2, Somerville, MA 02145", phone:"(857) 999-7258",
+      web:"", age:"Ages 2–5", seedNotes:"East Somerville (02145) — close to Glen St. Takes ages 2–5." },
+    { id:"sv-beal", name:"Amber Rose Beal Family Child Care", type:"Family", city:"Somerville",
+      address:"Evergreen Ave, Somerville, MA 02145", phone:"(617) 590-4204",
+      web:"", age:"Group home (max 10)", seedNotes:"Somerville (02145). Licensed family childcare." },
+    { id:"sv-pellegrini", name:"Candace Pellegrini Family Child Care", type:"Family", city:"Somerville",
+      address:"Somerville, MA", phone:"(617) 628-1742",
+      web:"", age:"Home care (max 8)", seedNotes:"Licensed family childcare in Somerville." },
+    { id:"sv-perezgamez", name:"Ana Perez-Gamez Family Child Care", type:"Family", city:"Somerville",
+      address:"Somerville, MA", phone:"(617) 944-0959",
+      web:"", age:"Home care (max 6)", seedNotes:"Licensed family childcare in Somerville." },
+    { id:"sv-ayala", name:"Nieves R. Ayala Family Child Care", type:"Family", city:"Somerville",
+      address:"Somerville, MA", phone:"(617) 623-2393",
+      web:"", age:"Group home (max 10)", seedNotes:"Licensed family childcare in Somerville." },
+    { id:"sv-demelo", name:"Cidalia de Melo Family Child Care", type:"Family", city:"Somerville",
+      address:"Somerville, MA", phone:"(617) 623-0007",
+      web:"", age:"Group home (max 10)", seedNotes:"Licensed family childcare in Somerville." },
     { id:"oec", name:"Cambridge Office of Early Childhood — Placement Help", type:"Resource",
       address:"1972 Massachusetts Ave, Cambridge, MA 02140", phone:"(617) 349-9716",
       web:"https://earlychildhoodcambridge.org/for-families/", email:"njohnson@cpsd.us",
@@ -530,6 +563,8 @@
   var countEl = document.getElementById("count");
   var emptyEl = document.getElementById("empty");
   var activeStatusFilter = "";
+  var activeCity = "";
+  function cityOf(p) { return p.city || "Cambridge"; }
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
     return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]; }); }
@@ -563,6 +598,7 @@
     var list = allPlaces().filter(function (p) {
       var status = val(p.id, "status");
       if (tf && p.type !== tf) return false;
+      if (activeCity && cityOf(p) !== activeCity) return false;
       if (activeStatusFilter) {
         if (activeStatusFilter === "call") { if (status !== "call" && status !== "tour") return false; }
         else if (status !== activeStatusFilter) return false;
@@ -705,6 +741,13 @@
   searchEl.addEventListener("input", render);
   typeEl.addEventListener("change", render);
   sortEl.addEventListener("change", render);
+
+  document.getElementById("tabs").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".tab"); if (!b) return;
+    activeCity = b.getAttribute("data-city");
+    Array.prototype.forEach.call(this.querySelectorAll(".tab"), function (t) { t.classList.toggle("active", t === b); });
+    render();
+  });
 
   document.getElementById("addBtn").addEventListener("click", function () {
     var name = prompt("Name of the daycare / caregiver?");
