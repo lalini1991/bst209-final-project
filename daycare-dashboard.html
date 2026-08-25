@@ -256,9 +256,10 @@
   </section>
 
   <div class="tabs" id="tabs" role="tablist" aria-label="Area">
-    <button class="tab active" data-city="" role="tab">All areas</button>
-    <button class="tab" data-city="Cambridge" role="tab">Cambridge</button>
-    <button class="tab" data-city="Somerville" role="tab">Somerville daycare</button>
+    <button class="tab active" data-filter="all" role="tab">All areas</button>
+    <button class="tab" data-filter="city:Cambridge" role="tab">Cambridge</button>
+    <button class="tab" data-filter="city:Somerville" role="tab">Somerville daycare</button>
+    <button class="tab" data-filter="near:Alpine" role="tab">Near 100 Alpine St</button>
   </div>
 
   <div class="controls">
@@ -465,9 +466,9 @@
     { id:"sv-beal", name:"Amber Rose Beal Family Child Care", type:"Family", city:"Somerville",
       address:"Evergreen Ave, Somerville, MA 02145", phone:"(617) 590-4204",
       web:"", age:"Group home (max 10)", seedNotes:"Somerville (02145). Licensed family childcare." },
-    { id:"sv-pellegrini", name:"Candace Pellegrini Family Child Care", type:"Family", city:"Somerville",
-      address:"Somerville, MA", phone:"(617) 628-1742",
-      web:"", age:"Home care (max 8)", seedNotes:"Licensed family childcare in Somerville." },
+    { id:"sv-pellegrini", name:"Candace Pellegrini Family Child Care", type:"Family", city:"Somerville", near:"Alpine",
+      address:"Woodbine St, Somerville, MA 02143", phone:"(617) 628-1742",
+      web:"", age:"Home care (max 8)", seedNotes:"Spring Hill (02143), near Alpine St. Ages birth–5." },
     { id:"sv-perezgamez", name:"Ana Perez-Gamez Family Child Care", type:"Family", city:"Somerville",
       address:"Somerville, MA", phone:"(617) 944-0959",
       web:"", age:"Home care (max 6)", seedNotes:"Licensed family childcare in Somerville." },
@@ -477,6 +478,33 @@
     { id:"sv-demelo", name:"Cidalia de Melo Family Child Care", type:"Family", city:"Somerville",
       address:"Somerville, MA", phone:"(617) 623-0007",
       web:"", age:"Group home (max 10)", seedNotes:"Licensed family childcare in Somerville." },
+    { id:"al-panameno", name:"Arminda Panameno Family Child Care", type:"Family", city:"Somerville", near:"Alpine",
+      address:"R Linden St, Somerville, MA 02143", phone:"(617) 776-0397",
+      web:"", age:"Group home (max 10)", seedNotes:"Spring Hill (02143), near Alpine St. Licensed family childcare." },
+    { id:"al-west", name:"Maria West Family Child Care", type:"Family", city:"Somerville", near:"Alpine",
+      address:"Garrison Ave, Somerville, MA 02144", phone:"(617) 628-8518",
+      web:"", age:"Group home (max 10)", seedNotes:"Near Davis Sq (02144). Licensed family childcare." },
+    { id:"al-pooh", name:"Pooh & Friends Daycare", type:"Center", city:"Somerville", near:"Alpine",
+      address:"149A Highland Ave, Somerville, MA 02143", phone:"(617) 767-6461",
+      web:"", age:"Group + school-age (cap 58)", seedNotes:"On Highland Ave (02143) — very close to Alpine St." },
+    { id:"al-brightfuture", name:"Bright Future Educare Center", type:"Center", city:"Somerville", near:"Alpine",
+      address:"311B Highland Ave, Somerville, MA 02144", phone:"(617) 776-5903",
+      web:"", age:"Group (cap 33)", seedNotes:"On Highland Ave. Participates in subsidized childcare." },
+    { id:"al-ymca", name:"Somerville YMCA Preschool", type:"Center", city:"Somerville", near:"Alpine",
+      address:"101 Highland Ave, Somerville, MA 02143", phone:"",
+      web:"https://somervilleymca.org/", age:"Group + school-age (cap 39)", seedNotes:"On Highland Ave, close to Alpine St. Call the Somerville YMCA main branch to reach the preschool." },
+    { id:"al-bhdavis", name:"Bright Horizons at Davis Square", type:"Center", city:"Somerville", near:"Alpine",
+      address:"99 Dover St, Somerville, MA 02144", phone:"(617) 625-1300",
+      web:"", age:"Infant – school age (cap 81)", seedNotes:"Davis Square. Accepts vouchers." },
+    { id:"al-treehouse", name:"Tree House Academy Child Care", type:"Center", city:"Somerville", near:"Alpine",
+      address:"435 Washington St, Somerville, MA 02143", phone:"(617) 868-3800",
+      web:"", age:"Center care", seedNotes:"Washington St (02143)." },
+    { id:"al-kindercare", name:"KinderCare (Somerville)", type:"Center", city:"Somerville", near:"Alpine",
+      address:"Somerville, MA (near Davis)", phone:"(617) 666-9007",
+      web:"", age:"Infant – preschool", seedNotes:"National chain, Somerville — confirm exact location." },
+    { id:"al-open", name:"Open Center for Children", type:"Center", city:"Somerville", near:"Alpine",
+      address:"Somerville, MA", phone:"",
+      web:"", age:"Center care", seedNotes:"Somerville nonprofit center — look up phone & confirm location." },
     { id:"oec", name:"Cambridge Office of Early Childhood — Placement Help", type:"Resource",
       address:"1972 Massachusetts Ave, Cambridge, MA 02140", phone:"(617) 349-9716",
       web:"https://earlychildhoodcambridge.org/for-families/", email:"njohnson@cpsd.us",
@@ -564,6 +592,7 @@
   var emptyEl = document.getElementById("empty");
   var activeStatusFilter = "";
   var activeCity = "";
+  var activeNear = "";
   function cityOf(p) { return p.city || "Cambridge"; }
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -599,6 +628,7 @@
       var status = val(p.id, "status");
       if (tf && p.type !== tf) return false;
       if (activeCity && cityOf(p) !== activeCity) return false;
+      if (activeNear && (p.near || "") !== activeNear) return false;
       if (activeStatusFilter) {
         if (activeStatusFilter === "call") { if (status !== "call" && status !== "tour") return false; }
         else if (status !== activeStatusFilter) return false;
@@ -744,7 +774,10 @@
 
   document.getElementById("tabs").addEventListener("click", function (ev) {
     var b = ev.target.closest(".tab"); if (!b) return;
-    activeCity = b.getAttribute("data-city");
+    var f = b.getAttribute("data-filter") || "all";
+    activeCity = ""; activeNear = "";
+    if (f.indexOf("city:") === 0) activeCity = f.slice(5);
+    else if (f.indexOf("near:") === 0) activeNear = f.slice(5);
     Array.prototype.forEach.call(this.querySelectorAll(".tab"), function (t) { t.classList.toggle("active", t === b); });
     render();
   });
